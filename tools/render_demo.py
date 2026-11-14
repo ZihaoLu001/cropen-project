@@ -77,9 +77,17 @@ def run(a):
         prim_path="{ENV_REGEX_NS}/DemoCam", update_period=0, width=a.res[0], height=a.res[1], data_types=["rgb"],
         spawn=sim_utils.PinholeCameraCfg(focal_length=a.focal, focus_distance=400.0, horizontal_aperture=20.955,
                                          clipping_range=(0.01, 20.0)))
-    env = CROpenEnv(cfg)
     if a.pretty:
-        dress_scene(a, sim_utils)
+        # Dress the stage inside scene set-up, before the simulation starts. Binding materials on the hand's link
+        # prims after sim.reset() made the RTX renderer stop updating some finger links (they froze at earlier poses
+        # and the fingers looked detached; the physics was unaffected, checked against the bodies' poses).
+        orig_setup = CROpenEnv._setup_scene
+
+        def _setup_scene(self):
+            orig_setup(self)
+            dress_scene(a, sim_utils)
+        CROpenEnv._setup_scene = _setup_scene
+    env = CROpenEnv(cfg)
     cam = env.scene["demo_cam"]
     org = env.scene.env_origins[0:1].to(torch.float32)
     cam.set_world_poses_from_view(torch.tensor([a.eye], device=org.device) + org,
