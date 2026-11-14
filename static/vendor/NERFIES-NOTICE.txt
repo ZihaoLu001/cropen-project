@@ -1,0 +1,19 @@
+Nerfies website template
+Original source: https://github.com/nerfies/nerfies.github.io
+Original website: https://nerfies.github.io/
+Author: Keunhong Park and the Nerfies website contributors.
+Audited commit: 657409a62d59a93163872c0e4921cf651b987810
+Commit date: 2022-12-17
+Retrieved: 2026-10-27
+
+The upstream README and page footer license the website under:
+Creative Commons Attribution-ShareAlike 4.0 International License
+https://creativecommons.org/licenses/by-sa/4.0/
+
+The upstream footer asks derivative websites to link back to the original
+Nerfies page in their footer. The OaP site adapts the academic title, author,
+resource-button and section layout for its own content.
+
+Third-party components have their own licenses, documented in
+THIRD_PARTY_NOTICES.md. The Nerfies authors' research text, photos, videos,
+analytics, carousel and slider scripts are not distributed here.

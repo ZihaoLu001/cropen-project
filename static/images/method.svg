@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" role="img" aria-labelledby="mt md" font-family="'Noto Sans', 'Google Sans', system-ui, sans-serif">
+  <title id="mt">CR-Open method overview</title>
+  <desc id="md">The PPO actor sends relative joint targets to the Allegro hand in PhysX and receives joint states and fingertip forces over eight frames. The articulated closure's joints are read every physics substep by the virtual mechanism layer, which applies the hidden family's logic (thread, press gate, squeeze gate, breakaway, and a jam when a non-push cap is pressed) by writing drive targets and effort limits back to the closure joints. Only the critic sees the family and the mechanism state.</desc>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#52514e"/></marker>
+  </defs>
+  <rect width="1200" height="500" fill="#ffffff"/>
+  <!-- policy -->
+  <rect x="16" y="24" width="316" height="300" rx="16" fill="#f2f7fd" stroke="#2a78d6" stroke-width="2.5"/>
+  <text x="36" y="64" font-size="24" font-weight="700" fill="#0b0b0b">Policy (PPO actor)</text>
+  <text x="36" y="100" font-size="18" fill="#0b0b0b">sees what a real hand senses:</text>
+  <text x="44" y="132" font-size="18" fill="#52514e">• joint positions, velocities</text>
+  <text x="44" y="160" font-size="18" fill="#52514e">• joint targets, last action</text>
+  <text x="44" y="188" font-size="18" fill="#52514e">• 4 fingertip contact forces</text>
+  <text x="44" y="216" font-size="18" fill="#52514e">• over 8 control steps</text>
+  <text x="36" y="258" font-size="18" font-weight="700" fill="#1f63b5">never the closure type</text>
+  <text x="36" y="296" font-size="16" fill="#52514e">unlock bonus · threshold curriculum</text>
+  <rect x="16" y="346" width="316" height="130" rx="16" fill="#f7f6f3" stroke="#bdbbb3" stroke-width="2" stroke-dasharray="7 6"/>
+  <text x="36" y="384" font-size="20" font-weight="700" fill="#0b0b0b">Critic (training only)</text>
+  <text x="36" y="416" font-size="17" fill="#52514e">also sees the family and</text>
+  <text x="36" y="442" font-size="17" fill="#52514e">the mechanism state</text>
+  <!-- physx -->
+  <rect x="442" y="24" width="316" height="452" rx="16" fill="#f7f6f3" stroke="#bdbbb3" stroke-width="2.5"/>
+  <text x="462" y="64" font-size="24" font-weight="700" fill="#0b0b0b">PhysX simulation</text>
+  <rect x="460" y="86" width="280" height="140" rx="12" fill="#ffffff" stroke="#d8d6cf" stroke-width="1.5"/>
+  <text x="476" y="120" font-size="20" font-weight="700" fill="#0b0b0b">Allegro hand</text>
+  <text x="476" y="152" font-size="17" fill="#52514e">16 joints, palm down,</text>
+  <text x="476" y="178" font-size="17" fill="#52514e">fixed base, position</text>
+  <text x="476" y="204" font-size="17" fill="#52514e">control at 30 Hz</text>
+  <rect x="460" y="246" width="280" height="210" rx="12" fill="#ffffff" stroke="#d8d6cf" stroke-width="1.5"/>
+  <text x="476" y="280" font-size="20" font-weight="700" fill="#0b0b0b">Articulated closure</text>
+  <text x="476" y="312" font-size="17" fill="#52514e">one shape for all families:</text>
+  <text x="476" y="338" font-size="17" fill="#52514e">cap shell, two squeeze tabs,</text>
+  <text x="476" y="364" font-size="17" fill="#52514e">press travel, thread, lift</text>
+  <text x="476" y="404" font-size="17" fill="#52514e">plain joints with drives,</text>
+  <text x="476" y="430" font-size="17" fill="#52514e">no custom contact physics</text>
+  <!-- vml -->
+  <rect x="868" y="24" width="316" height="452" rx="16" fill="#fdf3ee" stroke="#eb6834" stroke-width="2.5"/>
+  <text x="888" y="64" font-size="24" font-weight="700" fill="#0b0b0b">Mechanism layer</text>
+  <text x="888" y="96" font-size="17" fill="#52514e">every physics substep,</text>
+  <text x="888" y="120" font-size="17" fill="#52514e">for the hidden family:</text>
+  <text x="896" y="158" font-size="18" fill="#0b0b0b"><tspan font-weight="700">M1</tspan> plain thread</text>
+  <text x="896" y="188" font-size="18" fill="#0b0b0b"><tspan font-weight="700">M2</tspan> press to engage</text>
+  <text x="896" y="218" font-size="18" fill="#0b0b0b"><tspan font-weight="700">M3</tspan> squeeze to engage</text>
+  <text x="896" y="248" font-size="18" fill="#0b0b0b"><tspan font-weight="700">M6</tspan> breakaway torque</text>
+  <text x="888" y="292" font-size="18" font-weight="700" fill="#b5461a">pressing a non-push cap</text>
+  <text x="888" y="316" font-size="18" font-weight="700" fill="#b5461a">jams it</text>
+  <text x="888" y="356" font-size="17" fill="#52514e">thresholds and frictions</text>
+  <text x="888" y="380" font-size="17" fill="#52514e">redrawn every episode</text>
+  <text x="888" y="420" font-size="17" fill="#52514e">acts only through drive</text>
+  <text x="888" y="444" font-size="17" fill="#52514e">targets and effort limits</text>
+  <!-- arrows: policy <-> hand -->
+  <line x1="334" y1="128" x2="458" y2="128" stroke="#52514e" stroke-width="2.5" marker-end="url(#arr)"/>
+  <text x="396" y="116" text-anchor="middle" font-size="15" fill="#52514e">targets</text>
+  <line x1="458" y1="186" x2="334" y2="186" stroke="#52514e" stroke-width="2.5" marker-end="url(#arr)"/>
+  <text x="396" y="210" text-anchor="middle" font-size="15" fill="#52514e">states,</text>
+  <text x="396" y="228" text-anchor="middle" font-size="15" fill="#52514e">forces</text>
+  <!-- arrows: closure <-> mechanism layer -->
+  <line x1="742" y1="320" x2="866" y2="320" stroke="#52514e" stroke-width="2.5" marker-end="url(#arr)"/>
+  <text x="804" y="308" text-anchor="middle" font-size="15" fill="#52514e">joint states</text>
+  <line x1="866" y1="390" x2="742" y2="390" stroke="#52514e" stroke-width="2.5" marker-end="url(#arr)"/>
+  <text x="804" y="414" text-anchor="middle" font-size="15" fill="#52514e">targets,</text>
+  <text x="804" y="432" text-anchor="middle" font-size="15" fill="#52514e">limits</text>
+</svg>

@@ -1,0 +1,32 @@
+{
+ "family": "M3",
+ "ckpt": "/workspace/dexrl_local/runs/cropen_ppo_gate30_s3/ckpt_08000.pt",
+ "seed": 300,
+ "eye": [
+  0.1,
+  0.52,
+  0.6
+ ],
+ "lookat": [
+  0.02,
+  -0.04,
+  0.35
+ ],
+ "attempts": [
+  {
+   "attempt": 0,
+   "steps": 599,
+   "seconds": 19.97,
+   "success": false,
+   "frames": 599
+  },
+  {
+   "attempt": 1,
+   "steps": 439,
+   "seconds": 14.63,
+   "success": true,
+   "frames": 439
+  }
+ ],
+ "note": "presentation media: family forced via cfg.families; first successful attempt kept; all attempts listed"
+}

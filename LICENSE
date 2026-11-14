@@ -1,0 +1,17 @@
+CR-Open project website
+
+Website source adapted from the Nerfies website by Keunhong Park and contributors:
+https://github.com/nerfies/nerfies.github.io
+(via the author's Objectives as Policies project site, https://github.com/ZihaoLu001/oap-project)
+
+The original template and this adaptation are licensed under the Creative Commons
+Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0).
+
+License deed: https://creativecommons.org/licenses/by-sa/4.0/
+Legal code: https://creativecommons.org/licenses/by-sa/4.0/legalcode
+
+Changes: CR-Open research content, author information, simulation media, result charts,
+method figure, closure-family video picker.
+
+Third-party software and font notices are in static/vendor/THIRD_PARTY_NOTICES.md.
+The research media are credited to their author.

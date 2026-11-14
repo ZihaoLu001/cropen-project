@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CR-Open: a dexterous hand learns to open child-resistant closures whose mechanism it cannot see — push, squeeze or turn. Work in progress; all results in simulation.">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="author" content="Zihao Lu">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Push, Squeeze or Turn? (CR-Open)">
+  <meta property="og:description" content="Learning to open child-resistant closures of hidden type with a dexterous hand. Work in progress.">
+  <meta property="og:url" content="https://zihaolu001.github.io/cropen-project/">
+  <meta property="og:image" content="https://zihaolu001.github.io/cropen-project/static/videos/teaser-poster.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://zihaolu001.github.io/cropen-project/">
+  <title>Push, Squeeze or Turn? — CR-Open</title>
+  <link rel="icon" href="data:,">
+  <link rel="preload" href="./static/vendor/fonts/google-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./static/vendor/bulma/bulma.min.css">
+  <link rel="stylesheet" href="./static/vendor/fonts/fonts.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <script src="./static/js/index.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <nav class="project-nav" aria-label="Page navigation">
+    <a href="#overview">Overview</a>
+    <a href="#families">Families</a>
+    <a href="#method">Method</a>
+    <a href="#results">Preliminary results</a>
+    <a href="#status">Status</a>
+  </nav>
+  <main id="main">
+    <section class="hero publication-header" aria-labelledby="paper-title">
+      <div class="hero-body">
+        <div class="container is-max-desktop">
+          <div class="columns is-centered">
+            <div class="column has-text-centered">
+              <h1 id="paper-title" class="title is-1 publication-title">Push, Squeeze or Turn?<br><span class="publication-subtitle">Learning to Open Child-Resistant Closures of Hidden Type<br class="wide-break"> with a Dexterous Hand</span></h1>
+              <div class="is-size-5 publication-authors">
+                <span class="author-block">Zihao Lu</span>
+              </div>
+              <!-- AUTHOR BLOCK TO CONFIRM: affiliation, co-authors, contact link -->
+              <div class="is-size-5 publication-affiliation">[affiliation to confirm]</div>
+              <p class="wip-badge"><span>Work in progress</span> · all results in simulation · paper in preparation</p>
+              <div class="publication-links">
+                <button class="button is-normal is-rounded arxiv-pending" disabled title="The preprint link will be added after publication.">Paper · coming soon</button>
+                <button class="button is-normal is-rounded arxiv-pending" disabled title="The code will be released with the preprint.">Code · coming soon</button>
+                <a href="#families" class="button is-normal is-rounded is-dark"><span class="icon"><img src="./static/vendor/fontawesome/youtube.svg" alt="" width="18" height="16"></span><span>Videos</span></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hero teaser" aria-label="Teaser: one policy opening four closure families">
+      <div class="container is-max-desktop">
+        <div class="hero-body">
+          <video id="teaser-video" autoplay muted loop playsinline preload="metadata" poster="./static/videos/teaser-poster.jpg" width="1280" height="720" aria-label="Four simulated clips: the same policy opens a plain threaded cap, a push-and-turn cap, a squeeze-and-turn cap and a stuck cap."><source src="./static/videos/teaser.mp4" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/teaser.mp4">Download the clip</a>.</video>
+          <p class="media-caption">One policy, four closures that look alike. Clockwise from top left: plain thread (M1), push-and-turn (M2), stuck seal (M6), squeeze-and-turn (M3). The policy is not told which one it holds.</p>
+          <p class="teaser-summary"><strong>CR-Open</strong> asks a dexterous hand to find out, by touch, how a child-resistant closure opens — and then to press, squeeze and turn with its fingers at the same time.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tinted" id="overview" aria-labelledby="overview-title">
+      <div class="container is-max-desktop"><div class="columns is-centered"><div class="column is-four-fifths">
+        <h2 id="overview-title" class="title is-3 has-text-centered">Overview</h2>
+        <div class="content has-text-justified">
+          <p>Child-resistant closures look like plain screw caps, but each opens only with its own action: push down while turning, squeeze two tabs while turning, or break a stuck seal first. In <strong>CR-Open</strong>, one fixed Allegro hand must open four such closure families that share one geometry, without being told the type. Pressing a closure that is not push-to-open jams its thread, so simply pressing, squeezing and turning all at once does not work: the hand has to find out what it is holding.</p>
+          <p>The closures run on plain PhysX joints through a <em>virtual mechanism layer</em> that only changes drive targets and effort limits, so the mechanisms are cheap to simulate and easy to vary. One PPO policy observes only joint states, fingertip forces and a short history — what a real hand could measure — and is trained with a one-off unlock bonus and a success-gated threshold curriculum. We study when the policy identifies the type, and how much of the difficulty is identification versus execution.</p>
+          <p class="muted">This page reports work in progress. The numbers below come from one finished training seed; a five-seed study, ablations and the identification analysis are running.</p>
+        </div>
+      </div></div></div>
+    </section>
+
+    <section class="section" id="families" aria-labelledby="families-title">
+      <div class="container is-max-desktop">
+        <h2 id="families-title" class="title is-3 has-text-centered">Four closures, one shape</h2>
+        <div class="task-picker"><label for="family-select">Closure:</label><div class="select"><select id="family-select">
+          <option value="m1">M1 · plain thread</option>
+          <option value="m2">M2 · push-and-turn</option>
+          <option value="m3">M3 · squeeze-and-turn</option>
+          <option value="m6">M6 · stuck seal</option>
+        </select></div></div>
+        <video id="family-video" controls muted loop playsinline preload="metadata" poster="./static/videos/m1-poster.jpg" width="1280" height="720" aria-label="M1 plain thread: the policy unscrews and lifts the cap."><source src="./static/videos/m1.mp4" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/m1.mp4">Download the clip</a>.</video>
+        <p id="family-description" class="task-description" aria-live="polite">Turn to unscrew, then lift. Pressing this cap jams its thread.</p>
+        <p class="media-caption muted">Simulation, real-time (30 Hz). Each clip is the first successful episode of a rollout with the family fixed for the recording; the policy itself never receives the family.</p>
+      </div>
+    </section>
+
+    <section class="section section-tinted" id="method" aria-labelledby="method-title">
+      <div class="container is-max-desktop">
+        <h2 id="method-title" class="title is-3 has-text-centered">Method</h2>
+        <figure class="method-figure"><img src="./static/images/method.svg" alt="Diagram: an articulated closure simulated in PhysX; a virtual mechanism layer reads the closure joints every physics substep and sets drive targets and effort limits according to the hidden family (gate thresholds, jam on a wrong press, breakaway); the PPO policy sees hand joints, targets and fingertip forces over eight frames, while the critic also sees the family and the mechanism state." width="1200" height="500" loading="lazy"></figure>
+        <div class="columns method-steps">
+          <div class="column"><h3 class="title is-5">Mechanisms as a layer</h3><p>Every physics substep, the virtual mechanism layer reads the closure's joints and sets their drive targets and effort limits: a gate that releases the thread only past a press or squeeze threshold, a jam when a non-push cap is pressed, a breakaway torque for the stuck seal. Thresholds and frictions are redrawn every episode.</p></div>
+          <div class="column"><h3 class="title is-5">Deployable observations</h3><p>The actor sees hand joint positions and velocities, joint targets, four fingertip contact forces and its last action, stacked over eight control steps. Only the asymmetric critic sees the family and the mechanism state.</p></div>
+          <div class="column"><h3 class="title is-5">Training recipe</h3><p>PPO with a one-off reward when a gated cap first engages, and a curriculum that raises each family's press or squeeze threshold once the policy succeeds often enough at the current one. Success means the cap is released and lifted by 1 cm.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="results" aria-labelledby="results-title">
+      <div class="container is-max-desktop"><div class="columns is-centered"><div class="column is-four-fifths">
+        <h2 id="results-title" class="title is-3 has-text-centered">Preliminary results <span class="title-note">(one seed)</span></h2>
+        <div class="content">
+          <p>Each point is a deterministic evaluation of a saved checkpoint on 2,048 fresh episodes at the full gate thresholds, counting only each environment's first episode.</p>
+          <figure class="result-figure"><img src="./static/images/curve_seed3.svg" alt="Line chart over training epochs 500 to 8000. M3 squeeze-and-turn success rises from 0 to 0.84 at epoch 4000, dips to 0.41 at epoch 7000 and ends at 0.61 at epoch 8000. The family-balanced success over all four families ends at 0.90." width="760" height="420" loading="lazy"><figcaption>Success over training for the squeeze-and-turn family (M3) and averaged over the four families. M3 is the hard case: its curve is not monotone, which is one reason the main study fixes the training budget in advance and reports the final checkpoint.</figcaption></figure>
+          <figure class="result-figure"><img src="./static/images/bars_seed3_e8000.svg" alt="Bar chart at epoch 8000: M1 1.00 (512 of 512), M2 1.00 (497 of 498), M3 0.61 (317 of 516), M6 1.00 (512 of 512), with 95 percent intervals." width="760" height="340" loading="lazy"><figcaption>Per-family success at epoch 8000 with 95 % intervals. The plain, push-and-turn and stuck-seal closures are solved; squeeze-and-turn is opened in about six of ten first attempts.</figcaption></figure>
+        </div>
+      </div></div></div>
+    </section>
+
+    <section class="section section-tinted" id="status" aria-labelledby="status-title">
+      <div class="container is-max-desktop"><div class="columns is-centered"><div class="column is-four-fifths">
+        <h2 id="status-title" class="title is-3 has-text-centered">Status</h2>
+        <div class="content">
+          <ul>
+            <li><strong>Main result:</strong> five training seeds with a pre-registered budget and evaluation protocol (running).</li>
+            <li><strong>Ablations:</strong> observation history, unlock bonus and threshold curriculum, each removed in turn.</li>
+            <li><strong>Baselines:</strong> hand-designed closed-loop scripts that use the same inputs, including one that is told the family.</li>
+            <li><strong>Analysis:</strong> when and how the policy recognises the closure type, and what hiding the type costs.</li>
+            <li><strong>Robustness:</strong> halved physics time step and out-of-range mechanism parameters.</li>
+          </ul>
+          <p>A preprint with the full protocol and results is in preparation. All results are in simulation; real-robot experiments are future work.</p>
+        </div>
+      </div></div></div>
+    </section>
+  </main>
+  <footer class="footer">
+    <div class="container is-max-desktop"><div class="content has-text-centered">
+      <p>This website is adapted from the <a href="https://nerfies.github.io/" target="_blank" rel="noopener noreferrer">Nerfies</a> template by Keunhong Park and contributors.<br>The website source is licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>.</p>
+    </div></div>
+  </footer>
+</body>
+</html>
