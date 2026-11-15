@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="./static/vendor/bulma/bulma.min.css">
   <link rel="stylesheet" href="./static/vendor/fonts/fonts.css">
   <link rel="stylesheet" href="./static/css/index.css">
-  <script src="./static/js/index.js" defer></script>
+  <script src="./static/js/index.js?v=n1" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -56,7 +56,7 @@
     <section class="hero teaser" aria-label="Teaser: one policy opening four closure families">
       <div class="container is-max-desktop">
         <div class="hero-body">
-          <video id="teaser-video" autoplay muted loop playsinline preload="metadata" poster="./static/videos/teaser-poster.jpg" width="1280" height="720" aria-label="Four simulated clips: the same policy opens a plain threaded cap, a push-and-turn cap, a squeeze-and-turn cap and a stuck cap."><source src="./static/videos/teaser.mp4" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/teaser.mp4">Download the clip</a>.</video>
+          <video id="teaser-video" autoplay muted loop playsinline preload="metadata" poster="./static/videos/teaser-poster.jpg?v=n1" width="1280" height="720" aria-label="Four simulated clips: the same policy opens a plain threaded cap, a push-and-turn cap, a squeeze-and-turn cap and a stuck cap."><source src="./static/videos/teaser.mp4?v=n1" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/teaser.mp4?v=n1">Download the clip</a>.</video>
           <p class="media-caption">One policy, four closures that look alike. Clockwise from top left: plain thread (M1), push-and-turn (M2), stuck seal (M6), squeeze-and-turn (M3). The policy is not told which one it holds.</p>
           <p class="teaser-summary"><strong>CR-Open</strong> asks a dexterous hand to find out, by touch, how a child-resistant closure opens — and then to press, squeeze and turn with its fingers at the same time.</p>
         </div>
@@ -69,7 +69,7 @@
         <div class="content has-text-justified">
           <p>Child-resistant closures look like plain screw caps, but each opens only with its own action: push down while turning, squeeze two tabs while turning, or break a stuck seal first. In <strong>CR-Open</strong>, one fixed Allegro hand must open four such closure families that share one geometry, without being told the type. Pressing a closure that is not push-to-open jams its thread, so simply pressing, squeezing and turning all at once does not work: the hand has to find out what it is holding.</p>
           <p>The closures run on plain PhysX joints through a <em>virtual mechanism layer</em> that only changes drive targets and effort limits, so the mechanisms are cheap to simulate and easy to vary. One PPO policy observes only joint states, fingertip forces and a short history — what a real hand could measure — and is trained with a one-off unlock bonus and a success-gated threshold curriculum. We study when the policy identifies the type, and how much of the difficulty is identification versus execution.</p>
-          <p class="muted">This page reports work in progress. The numbers below come from one finished training seed; a five-seed study, ablations and the identification analysis are running.</p>
+          <p class="muted">This page reports work in progress. The clips show a policy from the main study; the charts below are from an earlier pilot seed. The multi-seed study, ablations and the identification analysis are running.</p>
         </div>
       </div></div></div>
     </section>
@@ -83,9 +83,9 @@
           <option value="m3">M3 · squeeze-and-turn</option>
           <option value="m6">M6 · stuck seal</option>
         </select></div></div>
-        <video id="family-video" controls muted loop playsinline preload="metadata" poster="./static/videos/m1-poster.jpg" width="1280" height="720" aria-label="M1 plain thread: the policy unscrews and lifts the cap."><source src="./static/videos/m1.mp4" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/m1.mp4">Download the clip</a>.</video>
+        <video id="family-video" controls muted loop playsinline preload="metadata" poster="./static/videos/m1-poster.jpg?v=n1" width="1280" height="720" aria-label="M1 plain thread: the policy unscrews and lifts the cap."><source src="./static/videos/m1.mp4?v=n1" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/m1.mp4?v=n1">Download the clip</a>.</video>
         <p id="family-description" class="task-description" aria-live="polite">Turn to unscrew, then lift. Pressing this cap jams its thread.</p>
-        <p class="media-caption muted">Simulation, real-time (30 Hz). Each clip is the first successful episode of a rollout with the family fixed for the recording; the policy itself never receives the family.</p>
+        <p class="media-caption muted">Simulation, real-time (30 Hz). All clips show one policy: training seed 9 of the main study, final checkpoint (10,000 epochs), trained with the posture regularisers. On 2,048 evaluation episodes it opens M1 100 %, M2 99.8 % (500/501), M3 100 % and M6 99.8 % (507/508). It is the best of the five seeds finished so far on M3: their M3 success is 100 %, 76 %, 0 %, 0 % and 0 %, so the squeeze-and-turn closure is not yet solved reliably across seeds; three more seeds are training. Each clip is the first successful episode of a rollout with the family fixed for the recording; the policy itself never receives the family.</p>
       </div>
     </section>
 
@@ -96,14 +96,14 @@
         <div class="columns method-steps">
           <div class="column"><h3 class="title is-5">Mechanisms as a layer</h3><p>Every physics substep, the virtual mechanism layer reads the closure's joints and sets their drive targets and effort limits: a gate that releases the thread only past a press or squeeze threshold, a jam when a non-push cap is pressed, a breakaway torque for the stuck seal. Thresholds and frictions are redrawn every episode.</p></div>
           <div class="column"><h3 class="title is-5">Deployable observations</h3><p>The actor sees hand joint positions and velocities, joint targets, four fingertip contact forces and its last action, stacked over eight control steps. Only the asymmetric critic sees the family and the mechanism state.</p></div>
-          <div class="column"><h3 class="title is-5">Training recipe</h3><p>PPO with a one-off reward when a gated cap first engages, and a curriculum that raises each family's press or squeeze threshold once the policy succeeds often enough at the current one. Success means the cap is released and lifted by 1 cm.</p></div>
+          <div class="column"><h3 class="title is-5">Training recipe</h3><p>PPO with a one-off reward when a gated cap first engages, and a curriculum that raises each family's press or squeeze threshold once the policy succeeds often enough at the current one. A relaxed starting pose, a limit on finger hyperextension and small posture and action-rate penalties keep the idle fingers in a natural, human-like posture. Success means the cap is released and lifted by 1 cm.</p></div>
         </div>
       </div>
     </section>
 
     <section class="section" id="results" aria-labelledby="results-title">
       <div class="container is-max-desktop"><div class="columns is-centered"><div class="column is-four-fifths">
-        <h2 id="results-title" class="title is-3 has-text-centered">Preliminary results <span class="title-note">(one seed)</span></h2>
+        <h2 id="results-title" class="title is-3 has-text-centered">Preliminary results <span class="title-note">(one pilot seed, earlier recipe)</span></h2>
         <div class="content">
           <p>Each point is a deterministic evaluation of a saved checkpoint on 2,048 fresh episodes at the full gate thresholds, counting only each environment's first episode.</p>
           <figure class="result-figure"><img src="./static/images/curve_seed3.svg" alt="Line chart over training epochs 500 to 8000. M3 squeeze-and-turn success rises from 0 to 0.84 at epoch 4000, dips to 0.41 at epoch 7000 and ends at 0.61 at epoch 8000. The family-balanced success over all four families ends at 0.90." width="760" height="420" loading="lazy"><figcaption>Success over training for the squeeze-and-turn family (M3) and averaged over the four families. M3 is the hard case: its curve is not monotone, which is one reason the main study fixes the training budget in advance and reports the final checkpoint.</figcaption></figure>

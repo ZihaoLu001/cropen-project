@@ -17,10 +17,10 @@ selector.addEventListener('change', () => {
   const key = selector.value;
   const fam = families[key];
   familyVideo.pause();
-  familyVideo.poster = `./static/videos/${key}-poster.jpg`;
+  familyVideo.poster = `./static/videos/${key}-poster.jpg?v=n1`;
   familyVideo.setAttribute('aria-label', `${fam.name}: the policy opens and lifts the cap.`);
-  familyVideo.querySelector('source').src = `./static/videos/${key}.mp4`;
-  familyVideo.querySelector('a').href = `./static/videos/${key}.mp4`;
+  familyVideo.querySelector('source').src = `./static/videos/${key}.mp4?v=n1`;
+  familyVideo.querySelector('a').href = `./static/videos/${key}.mp4?v=n1`;
   document.getElementById('family-description').textContent = fam.description;
   familyVideo.load();
   if (!reduceMotion.matches) familyVideo.play().catch(() => {});

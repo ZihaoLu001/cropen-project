@@ -6,9 +6,13 @@ policy of an rl_games checkpoint (same agent config as train_ppo.py). An RTX cam
 control rate (30 Hz). Episodes are tried until one succeeds (at most
 --attempts); the log records every attempt, so the selection is disclosed. Frames -> H.264 MP4 (ffmpeg) + poster JPG.
 Runs on the GPU box in a scratch copy of the cropen code (never the E3 checkout).
+N1 policies (README P1-A1/P1-A2): pass the run's --reset-pose and --flex-floor JSON files, as its train args name them,
+with a copy of the N1 code (5cc9851 env_cropen.py); the env then has the policy's reset pose and flexion floor, read
+back after the build and written to the render log. The posture and rate terms change only the reward and are left out.
 
 Usage: python -B render_demo.py --cropen-dir <copy>/cropen --ckpt <ckpt.pt> --family M3 --out <dir> [--still]
        [--eye x y z] [--lookat x y z] [--res 1280 720] [--attempts 8] [--seed 100] [--tag name]
+       [--reset-pose pose_n1.json --flex-floor flex_floor_n1.json]
 """
 import argparse
 import json
@@ -37,6 +41,8 @@ def main():
                         "hand with white fingertips, warm key light with soft shadows, ground plane hidden. Visual "
                         "only: no collider, no change to physics or to the policy's inputs")
     p.add_argument("--focal", type=float, default=18.0)
+    p.add_argument("--reset-pose", type=Path, default=None, help="N1 policy: the run's reset pose JSON")
+    p.add_argument("--flex-floor", type=Path, default=None, help="N1 policy: the run's flexion floor JSON")
     from isaaclab.app import AppLauncher
     AppLauncher.add_app_launcher_args(p)
     p.set_defaults(headless=True, enable_cameras=True)
@@ -70,6 +76,13 @@ def run(a):
     cfg.r_unlock = 2.0
     cfg.obs_history = 8
     cfg.observation_space = 76 * 8
+    if (a.reset_pose is None) != (a.flex_floor is None):
+        raise SystemExit("an N1 policy needs both --reset-pose and --flex-floor")
+    n1 = None
+    if a.reset_pose is not None:                     # as train_ppo.py (5cc9851) sets them for an N1 run
+        n1 = dict(reset_pose=json.loads(a.reset_pose.read_text()), flex_floor=json.loads(a.flex_floor.read_text()))
+        cfg.hand_joint_pos = dict(n1["reset_pose"])
+        cfg.flex_floor = dict(n1["flex_floor"])
     import torch
     import isaaclab.sim as sim_utils
     from isaaclab.sensors import CameraCfg
@@ -88,6 +101,19 @@ def run(a):
             dress_scene(a, sim_utils)
         CROpenEnv._setup_scene = _setup_scene
     env = CROpenEnv(cfg)
+    readback = None
+    if n1 is not None:                               # the floor and the reset pose as the built env has them
+        names = [env.hand.joint_names[i] for i in env.hand_ids.tolist()]
+        lo = env.lo[0].tolist()
+        lo_cmd = env.lo_cmd[0].tolist()
+        dq = env.hand.data.default_joint_pos
+        q0 = (dq.torch if hasattr(dq, "torch") else dq)[0, env.hand_ids].tolist()
+        err_lo = max(abs(lo_cmd[j] - max(lo[j], float(n1["flex_floor"].get(nm, lo[j])))) for j, nm in enumerate(names))
+        err_q0 = max(abs(q0[j] - float(n1["reset_pose"][nm])) for j, nm in enumerate(names))
+        readback = dict(floor_err=err_lo, reset_pose_err=err_q0)
+        if err_lo > 1e-6 or err_q0 > 1e-6:
+            raise SystemExit(f"N1 readback failed: {readback}")
+        print("N1 readback", json.dumps(readback), flush=True)
     cam = env.scene["demo_cam"]
     org = env.scene.env_origins[0:1].to(torch.float32)
     cam.set_world_poses_from_view(torch.tensor([a.eye], device=org.device) + org,
@@ -151,6 +177,7 @@ def run(a):
     env.recording = False
     (a.out / f"{tag}_render_log.json").write_text(json.dumps(dict(
         family=a.family, ckpt=str(a.ckpt), seed=a.seed, eye=a.eye, lookat=a.lookat, attempts=log,
+        n1=None if n1 is None else dict(reset_pose=str(a.reset_pose), flex_floor=str(a.flex_floor), readback=readback),
         note="presentation media: family forced via cfg.families; first successful attempt kept; all attempts listed"),
         indent=1))
 
