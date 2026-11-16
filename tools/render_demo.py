@@ -9,12 +9,21 @@ Runs on the GPU box in a scratch copy of the cropen code (never the E3 checkout)
 N1 policies (README P1-A1/P1-A2): pass the run's --reset-pose and --flex-floor JSON files, as its train args name them,
 with a copy of the N1 code (5cc9851 env_cropen.py); the env then has the policy's reset pose and flexion floor, read
 back after the build and written to the render log. The posture and rate terms change only the reward and are left out.
+Physics (README P1-A3, physics v2): the clip runs the checkpoint's training physics. --solver-pos-iters N sets the hand
+and closure PhysX position iterations (physics_v2.apply_solver_iters of the --cropen-dir copy, after the camera is
+added); none = the pinned 8, cfg untouched. The checkpoint's run folder gives its training count (physics.json; none =
+a v1-code run, 8): a clip at another count is refused before the env is built (a v2 policy needs --solver-pos-iters
+255 and a P1-A3 copy of the code). With a P1-A3 copy, <tag>_physics.json is written once the env is built
+(physics_v2.record_physics: requested, cfg and read-back counts, the training count, the GPU), and the render log
+records the physics, this file's sha256 and the copy's physics_v2.py sha256. A copy older than P1-A3 (no
+physics_v2.py) renders only v1 checkpoints (it refuses a checkpoint whose physics.json is not 8).
 
 Usage: python -B render_demo.py --cropen-dir <copy>/cropen --ckpt <ckpt.pt> --family M3 --out <dir> [--still]
        [--eye x y z] [--lookat x y z] [--res 1280 720] [--attempts 8] [--seed 100] [--tag name]
-       [--reset-pose pose_n1.json --flex-floor flex_floor_n1.json]
+       [--reset-pose pose_n1.json --flex-floor flex_floor_n1.json] [--solver-pos-iters 255]
 """
 import argparse
+import hashlib
 import json
 import shutil
 import subprocess
@@ -43,6 +52,9 @@ def main():
     p.add_argument("--focal", type=float, default=18.0)
     p.add_argument("--reset-pose", type=Path, default=None, help="N1 policy: the run's reset pose JSON")
     p.add_argument("--flex-floor", type=Path, default=None, help="N1 policy: the run's flexion floor JSON")
+    p.add_argument("--solver-pos-iters", type=int, default=None,
+                   help="P1-A3: hand and closure PhysX position iterations; must be the checkpoint's training count "
+                        "(its run's physics.json; none = the pinned 8). v2 policies: 255")
     from isaaclab.app import AppLauncher
     AppLauncher.add_app_launcher_args(p)
     p.set_defaults(headless=True, enable_cameras=True)
@@ -66,6 +78,8 @@ def run(a):
     from env_cropen import CROpenEnv, CROpenEnvCfg
 
     tag = a.tag or a.family
+    solver_iters = getattr(a, "solver_pos_iters", None)
+    p2, train_phys = clip_physics(a.cropen_dir, a.ckpt, solver_iters)     # P1-A3: refused before the env is built
     a.out.mkdir(parents=True, exist_ok=True)
     cfg = CROpenEnvCfg()
     cfg.scene.num_envs = 1
@@ -100,7 +114,19 @@ def run(a):
             orig_setup(self)
             dress_scene(a, sim_utils)
         CROpenEnv._setup_scene = _setup_scene
+    if p2 is not None:
+        p2.apply_solver_iters(cfg, solver_iters)     # P1-A3: after the camera; None: cfg untouched
     env = CROpenEnv(cfg)
+    if p2 is not None:
+        rec = p2.record_physics("render_demo.py", cfg, env, solver_iters, a.out, name=f"{tag}_physics.json",
+                                extra=dict(train_physics=train_phys), expect=train_phys["eval"])
+        physics = dict(solver_pos_iters=rec["solver_pos_iters"], version=rec["version"],
+                       requested=rec["requested_solver_pos_iters"], readback=rec["readback_solver_pos_iters"],
+                       readback_matches_cfg=rec["readback_matches_cfg"], train=train_phys["train"],
+                       file=rec["file"], gpu=rec["gpu"])
+    else:
+        physics = dict(solver_pos_iters=8, version="v1", requested=None, train=train_phys["train"],
+                       note=train_phys["source"])
     readback = None
     if n1 is not None:                               # the floor and the reset pose as the built env has them
         names = [env.hand.joint_names[i] for i in env.hand_ids.tolist()]
@@ -178,8 +204,44 @@ def run(a):
     (a.out / f"{tag}_render_log.json").write_text(json.dumps(dict(
         family=a.family, ckpt=str(a.ckpt), seed=a.seed, eye=a.eye, lookat=a.lookat, attempts=log,
         n1=None if n1 is None else dict(reset_pose=str(a.reset_pose), flex_floor=str(a.flex_floor), readback=readback),
+        physics=physics, code_sha256={"render_demo.py": file_sha256(Path(__file__)),
+                                      "physics_v2.py": file_sha256(Path(a.cropen_dir) / "physics_v2.py")},
         note="presentation media: family forced via cfg.families; first successful attempt kept; all attempts listed"),
         indent=1))
+
+
+def file_sha256(path):
+    """sha256 of a file, None if it does not exist"""
+    path = Path(path)
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
+
+
+def clip_physics(cropen_dir, ckpt, solver_iters):
+    """(physics_v2 module or None, training physics) for the clip (P1-A3 D5): with a P1-A3 copy, the copy's
+    physics_v2.rollout_physics (the checkpoint's training count; the clip at that count, else refused); without one
+    (an older copy, the v1 physics only), the checkpoint's physics.json must be absent or at 8 and no
+    --solver-pos-iters is given. SystemExit on a refusal, before the env is built."""
+    try:
+        import physics_v2 as p2
+    except ImportError:
+        p2 = None
+    if p2 is not None and hasattr(p2, "rollout_physics"):
+        try:
+            return p2, p2.rollout_physics([ckpt], solver_iters)
+        except ValueError as e:
+            raise SystemExit(f"render_demo: {e}") from None
+    if solver_iters is not None:
+        raise SystemExit(f"render_demo: --solver-pos-iters needs a P1-A3 copy of the cropen code as --cropen-dir "
+                         f"({Path(cropen_dir) / 'physics_v2.py'} with rollout_physics)")
+    f = Path(ckpt).parent / "physics.json"
+    train = 8
+    if f.is_file():
+        train = json.loads(f.read_text(encoding="utf-8")).get("solver_pos_iters")
+    if train != 8:
+        raise SystemExit(f"render_demo: {f} records {train} position iterations; this copy has no physics_v2.py and "
+                         f"renders the pinned 8 only (P1-A3 D5): use a P1-A3 copy and --solver-pos-iters {train}")
+    return None, dict(train=8, eval=8, same_iters=True, cross_physics=False,
+                      source=str(f) if f.is_file() else "no physics.json: a run of the v1 code (pinned 8)")
 
 
 def wood_texture(path, size=2048, seed=3):
