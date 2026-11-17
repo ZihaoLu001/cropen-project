@@ -18,7 +18,7 @@
   <link rel="preload" href="./static/vendor/fonts/google-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="./static/vendor/bulma/bulma.min.css">
   <link rel="stylesheet" href="./static/vendor/fonts/fonts.css">
-  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="stylesheet" href="./static/css/index.css?v=v4">
   <script src="./static/js/index.js?v=v3b" defer></script>
 </head>
 <body>
@@ -27,7 +27,7 @@
     <a href="#overview">Overview</a>
     <a href="#families">Families</a>
     <a href="#method">Method</a>
-    <a href="#results">Preliminary results</a>
+    <a href="#results">Results</a>
     <a href="#status">Status</a>
   </nav>
   <main id="main">
@@ -69,7 +69,7 @@
         <div class="content has-text-justified">
           <p>Child-resistant closures look like plain screw caps, but each opens only with its own action: push down while turning, squeeze two tabs while turning, or break a stuck seal first. In <strong>CR-Open</strong>, one fixed Allegro hand must open four such closure families that share one geometry, without being told the type. Pressing a closure that is not push-to-open jams its thread, so simply pressing, squeezing and turning all at once does not work: the hand has to find out what it is holding.</p>
           <p>The closures run on plain PhysX joints through a <em>virtual mechanism layer</em> that only changes drive targets and effort limits, so the mechanisms are cheap to simulate and easy to vary. One PPO policy observes only joint states, fingertip forces and a short history — what a real hand could measure — and is trained with a one-off unlock bonus and a success-gated threshold curriculum. We study when the policy identifies the type, and how much of the difficulty is identification versus execution.</p>
-          <p class="muted">This page reports work in progress. The clips show one stage-1 policy of the main study in the corrected physics (v2); the charts below are from an earlier pilot seed in the earlier physics. The multi-seed study (eight seeds per arm), ablations and the identification analysis are running.</p>
+          <p class="muted">This page reports work in progress. The clips show one stage-1 policy of the main study in the corrected physics (v2). The results are from the first full study (eight seeds per arm, with ablations), which ran in the earlier physics (v1); the main study re-runs it in physics v2 and is training, and the identification analysis is in progress.</p>
         </div>
       </div></div></div>
     </section>
@@ -77,6 +77,10 @@
     <section class="section" id="families" aria-labelledby="families-title">
       <div class="container is-max-desktop">
         <h2 id="families-title" class="title is-3 has-text-centered">Four closures, one shape</h2>
+        <figure class="mech-figure">
+          <a href="./static/images/mechanisms.svg?v=v4" target="_blank" rel="noopener" title="Open the figure at full size"><img src="./static/images/mechanisms.svg?v=v4" alt="Left: a render of the simulated closure, a white ridged shell with two orange side tabs above a teal band on an amber bottle; the type is hidden from the policy. Right: four section views of the same closure, one per family, with the input that opens it. M1 plain thread: the shell is keyed to the threaded inner cap, so turning unscrews it, and pressing past the press threshold jams the thread. M2 push-and-turn: a spring and gate teeth between shell and inner cap; pushing down past the press threshold while turning engages the thread. M3 squeeze-and-turn: each tab drives a pawl; squeezing both tabs past the squeeze threshold while turning engages the thread. M6 stuck seal: a seal holds the cap until the twist exceeds the breakaway torque, then it unscrews like M1." width="1200" height="438" loading="lazy"></a>
+          <figcaption>The four families share one shape: the hand meets the same shell, tabs, band and thread every time. Behind the same joints, the virtual mechanism layer applies a different rule for each family (section views, not to scale): M1 unscrews when turned and jams when pressed past the press threshold; M2 engages its thread only while the shell is pushed down past that threshold; M3 only while both tabs are squeezed past the squeeze threshold; M6 is held by a seal until the twist exceeds the breakaway torque. The keys, gate teeth, pawls and seal show how a real closure would build each rule; in the simulation they are rules of the layer acting on plain joints, not modelled parts. The thresholds, the breakaway torque and the number of turns are redrawn every episode.</figcaption>
+        </figure>
         <div class="task-picker"><label for="family-select">Closure:</label><div class="select"><select id="family-select">
           <option value="m1">M1 · plain thread</option>
           <option value="m2">M2 · push-and-turn</option>
@@ -92,22 +96,88 @@
     <section class="section section-tinted" id="method" aria-labelledby="method-title">
       <div class="container is-max-desktop">
         <h2 id="method-title" class="title is-3 has-text-centered">Method</h2>
-        <figure class="method-figure"><img src="./static/images/method.svg" alt="Diagram: an articulated closure simulated in PhysX; a virtual mechanism layer reads the closure joints every physics substep and sets drive targets and effort limits according to the hidden family (gate thresholds, jam on a wrong press, breakaway); the PPO policy sees hand joints, targets and fingertip forces over eight frames, while the critic also sees the family and the mechanism state." width="1200" height="500" loading="lazy"></figure>
+        <figure class="method-figure">
+          <a href="./static/images/method.svg?v=v4" target="_blank" rel="noopener" title="Open the figure at full size"><img src="./static/images/method.svg?v=v4" alt="Method overview in three groups. Simulation: a render of the palm-down Allegro hand above the bottle and a close-up of the closure with its joints (shell rotation, press, tabs, lift); a nested virtual mechanism layer reads the closure joints every physics substep and writes drive targets and effort limits, following the hidden family and parameters redrawn every episode (gate, jam, slip clutch, thread). Deployable observation: fingertip contact forces from four fingertips plus joint positions, velocities and targets and the last action form one 76-number step, stacked over eight control steps; it contains neither the family nor the closure state. Policy: an MLP actor maps the stack to 16 actions that move the joint targets at 30 Hz. Training only, dashed: the critic sees the current step plus the closure joints, the family one-hot, the mechanism state and its parameters; PPO uses the reward (thread progress, release, lift, success, a one-off bonus when a gated cap first engages, jam, action and force costs, and in the N1 arm posture and action-rate costs); a gate curriculum raises the M2 and M3 thresholds from a quarter of their value as the success rate allows." width="1200" height="720" loading="lazy"></a>
+          <figcaption>How CR-Open is trained. Solid arrows run at every step and use only what a real hand can sense; dashed arrows exist only during training. The close-up of the closure uses the paint of the clips.</figcaption>
+        </figure>
         <div class="columns method-steps">
           <div class="column"><h3 class="title is-5">Mechanisms as a layer</h3><p>Every physics substep, the virtual mechanism layer reads the closure's joints and sets their drive targets and effort limits: a gate that releases the thread only past a press or squeeze threshold, a jam when a non-push cap is pressed, a breakaway torque for the stuck seal. Thresholds and frictions are redrawn every episode.</p></div>
           <div class="column"><h3 class="title is-5">Deployable observations</h3><p>The actor sees hand joint positions and velocities, joint targets, four fingertip contact forces and its last action, stacked over eight control steps. Only the asymmetric critic sees the family and the mechanism state.</p></div>
-          <div class="column"><h3 class="title is-5">Training recipe</h3><p>PPO with a one-off reward when a gated cap first engages, and a curriculum that raises each family's press or squeeze threshold once the policy succeeds often enough at the current one. A relaxed starting pose, a limit on finger hyperextension and small posture and action-rate penalties keep the idle fingers in a natural, human-like posture. Success means the cap is released and lifted by 1 cm.</p></div>
+          <div class="column"><h3 class="title is-5">Training recipe</h3><p>PPO with a one-off reward when a gated cap first engages, and a curriculum that raises each family's press or squeeze threshold once the policy succeeds often enough at the current one. The N1 arm adds a relaxed starting pose, a limit on finger hyperextension and small posture and action-rate penalties, which keep the idle fingers in a natural, human-like posture. Success means the cap is released and lifted by 1 cm.</p></div>
         </div>
       </div>
     </section>
 
     <section class="section" id="results" aria-labelledby="results-title">
       <div class="container is-max-desktop"><div class="columns is-centered"><div class="column is-four-fifths">
-        <h2 id="results-title" class="title is-3 has-text-centered">Preliminary results <span class="title-note">(one pilot seed, earlier recipe)</span></h2>
+        <h2 id="results-title" class="title is-3 has-text-centered">First full study <span class="title-note">(physics v1, 8 seeds per arm)</span></h2>
         <div class="content">
-          <p>Each point is a deterministic evaluation of a saved checkpoint on 2,048 fresh episodes at the full gate thresholds, counting only each environment's first episode.</p>
-          <figure class="result-figure"><img src="./static/images/curve_seed3.svg" alt="Line chart over training epochs 500 to 8000. M3 squeeze-and-turn success rises from 0 to 0.84 at epoch 4000, dips to 0.41 at epoch 7000 and ends at 0.61 at epoch 8000. The family-balanced success over all four families ends at 0.90." width="760" height="420" loading="lazy"><figcaption>Success over training for the squeeze-and-turn family (M3) and averaged over the four families. M3 is the hard case: its curve is not monotone, which is one reason the main study fixes the training budget in advance and reports the final checkpoint.</figcaption></figure>
-          <figure class="result-figure"><img src="./static/images/bars_seed3_e8000.svg" alt="Bar chart at epoch 8000: M1 1.00 (512 of 512), M2 1.00 (497 of 498), M3 0.61 (317 of 516), M6 1.00 (512 of 512), with 95 percent intervals." width="760" height="340" loading="lazy"><figcaption>Per-family success at epoch 8000 with 95 % intervals. The plain, push-and-turn and stuck-seal closures are solved; squeeze-and-turn is opened in about six of ten first attempts.</figcaption></figure>
+          <p>Two arms with eight training seeds each, trained for 10,000 epochs (32,768 frames per epoch): the task reward alone, and the task reward with the posture regularisers (N1). Each seed's final checkpoint is evaluated deterministically on 2,048 fresh episodes at the full gate thresholds, counting only each environment's first episode; intervals are 95 % t-intervals of the mean over seeds.</p>
+          <p class="muted">This study ran in the earlier physics settings (v1). The main study re-runs both arms and the ablations in the corrected physics (v2, 255 solver iterations for the hand and the closure) and is still training, so these are not the paper's final numbers.</p>
+          <h3 class="title is-5 result-claim">M1, M2 and M6 are opened by every seed; M3 splits the seeds</h3>
+          <figure class="result-figure"><a href="./static/images/v1_success_e10000.svg?v=v4" target="_blank" rel="noopener" title="Open the chart at full size"><img src="./static/images/v1_success_e10000.svg?v=v4" alt="Two dot plots of success rate at epoch 10,000, one per arm, eight seeds each. Task reward only: M1, M2 and M6 near 1 for every seed (means 0.9998, 0.9892, 0.9998); M3 seeds spread from 0 to 0.99 (mean 0.5589, 95 % interval 0.1774 to 0.9404); balanced mean 0.8869. With posture regularisers: M1, M2 and M6 near 1 (means 0.9985, 0.9884, 0.9995); M3 four seeds at 0, others 0.57 to 1 (mean 0.4125, interval 0.0279 to 0.7971); balanced mean 0.8497." width="768" height="370" loading="lazy"></a>
+            <figcaption>Each circle is one training seed's success rate on that family's first episodes (about 500 of the 2,048); the black tick is the mean over the eight seeds and the bar its 95 % interval. Every seed opens at least 94 % of the M1, M2 and M6 caps in both arms. On M3, with the task reward alone, four seeds open more than 90 % and two open none (mean 0.5589 ± 0.4563 SD); with the posture regularisers, two seeds open more than 95 %, one 76 %, one 57 % and four open none (mean 0.4125 ± 0.4600 SD). Adding the posture regularisers changes balanced success by −3.7 pp (95 % Welch interval −16.2 to +8.7 pp) and M3 by −14.6 pp (−63.8 to +34.5 pp).</figcaption>
+          </figure>
+          <details class="table-view"><summary>Per-seed values (table)</summary>
+          <div class="table-scroll">
+<!-- BEGIN v1 success table (tools/make_v1_charts.py) -->
+<table class="table is-narrow result-table">
+<caption>Success rate of each training seed's final checkpoint (epoch 10,000) on its first episodes, physics v1. Mean ± SD over the 8 seeds and the 95 % t-interval of the mean (df 7, clipped to [0, 1]). Balanced success is the mean over the four families.</caption>
+<thead><tr><th scope="col">Seed</th><th scope="col">M1</th><th scope="col">M2</th><th scope="col">M3</th><th scope="col">M6</th><th scope="col">balanced</th></tr></thead>
+<tbody>
+<tr class="group-row"><th scope="rowgroup" colspan="6">Task reward only</th></tr>
+<tr><th scope="row">1</th><td>1.0000</td><td>0.9921</td><td>0.9847</td><td>1.0000</td><td>0.9942</td></tr>
+<tr><th scope="row">2</th><td>1.0000</td><td>0.9940</td><td>0.9719</td><td>1.0000</td><td>0.9915</td></tr>
+<tr><th scope="row">4</th><td>0.9982</td><td>0.9726</td><td>0.1635</td><td>1.0000</td><td>0.7836</td></tr>
+<tr><th scope="row">5</th><td>1.0000</td><td>0.9963</td><td>0.0000</td><td>1.0000</td><td>0.7491</td></tr>
+<tr><th scope="row">6</th><td>1.0000</td><td>0.9833</td><td>0.4475</td><td>1.0000</td><td>0.8577</td></tr>
+<tr><th scope="row">7</th><td>1.0000</td><td>0.9981</td><td>0.9944</td><td>1.0000</td><td>0.9981</td></tr>
+<tr><th scope="row">8</th><td>1.0000</td><td>0.9831</td><td>0.0000</td><td>0.9980</td><td>0.7453</td></tr>
+<tr><th scope="row">9</th><td>1.0000</td><td>0.9938</td><td>0.9093</td><td>1.0000</td><td>0.9758</td></tr>
+<tr class="summary-row"><th scope="row">mean ± SD</th><td>0.9998 ± 0.0006</td><td>0.9892 ± 0.0087</td><td>0.5589 ± 0.4563</td><td>0.9998 ± 0.0007</td><td>0.8869 ± 0.1154</td></tr>
+<tr class="summary-row"><th scope="row">95 % interval</th><td>0.9992 to 1.0000</td><td>0.9819 to 0.9964</td><td>0.1774 to 0.9404</td><td>0.9992 to 1.0000</td><td>0.7904 to 0.9834</td></tr>
+<tr class="group-row"><th scope="rowgroup" colspan="6">With posture regularisers (N1)</th></tr>
+<tr><th scope="row">1</th><td>1.0000</td><td>0.9981</td><td>0.7634</td><td>1.0000</td><td>0.9404</td></tr>
+<tr><th scope="row">2</th><td>1.0000</td><td>0.9979</td><td>0.0000</td><td>1.0000</td><td>0.7495</td></tr>
+<tr><th scope="row">4</th><td>0.9922</td><td>0.9940</td><td>0.0000</td><td>0.9982</td><td>0.7461</td></tr>
+<tr><th scope="row">5</th><td>1.0000</td><td>0.9939</td><td>0.0000</td><td>1.0000</td><td>0.7485</td></tr>
+<tr><th scope="row">6</th><td>0.9980</td><td>0.9465</td><td>0.0000</td><td>1.0000</td><td>0.7361</td></tr>
+<tr><th scope="row">7</th><td>1.0000</td><td>0.9959</td><td>0.9672</td><td>1.0000</td><td>0.9908</td></tr>
+<tr><th scope="row">8</th><td>0.9980</td><td>0.9829</td><td>0.5695</td><td>1.0000</td><td>0.8876</td></tr>
+<tr><th scope="row">9</th><td>1.0000</td><td>0.9980</td><td>1.0000</td><td>0.9980</td><td>0.9990</td></tr>
+<tr class="summary-row"><th scope="row">mean ± SD</th><td>0.9985 ± 0.0027</td><td>0.9884 ± 0.0177</td><td>0.4125 ± 0.4600</td><td>0.9995 ± 0.0009</td><td>0.8497 ± 0.1170</td></tr>
+<tr class="summary-row"><th scope="row">95 % interval</th><td>0.9962 to 1.0000</td><td>0.9736 to 1.0000</td><td>0.0279 to 0.7971</td><td>0.9988 to 1.0000</td><td>0.7520 to 0.9475</td></tr>
+</tbody>
+</table>
+<!-- END v1 success table -->
+          </div>
+          </details>
+          <h3 class="title is-5 result-claim">For M3, the gate curriculum is necessary in both arms</h3>
+          <figure class="result-figure"><a href="./static/images/v1_ablation_m3_e6000.svg?v=v4" target="_blank" rel="noopener" title="Open the chart at full size"><img src="./static/images/v1_ablation_m3_e6000.svg?v=v4" alt="Two dot plots of M3 success at epoch 6,000, one per arm: the full recipe (eight seeds) against three runs with one component removed (three seeds each). Task reward only: full recipe mean 0.473; history cut to one step 0.001 (necessary); no unlock bonus 0.057 (not necessary, intervals overlap); no curriculum 0.000 (necessary). With posture regularisers: full recipe 0.388; history cut to one step 1.000 (raised M3); no unlock bonus 0.461 (no difference resolved); no curriculum 0.000 (necessary)." width="768" height="450" loading="lazy"></a>
+            <figcaption>M3 success at epoch 6,000 for the full recipe (eight seeds) and for runs with one component removed (three seeds each): the observation history cut to one step, no unlock bonus, or no gate curriculum. Below each removal: the change in mean M3 success and the call of the rule fixed before these runs were read (necessary: a drop of at least 20 pp and non-overlapping 95 % intervals). With the task reward alone, the history and the curriculum are necessary for M3; without the unlock bonus M3 drops by 41.6 pp, but the intervals overlap (95 % interval of the change −80.2 to −3.0 pp). With the posture regularisers, the curriculum is necessary, while cutting the history to one step raised M3 to 1.000 in all three seeds (+61.2 pp, 95 % interval +25.2 to +97.2 pp), the opposite of the task-only arm; removing the unlock bonus resolved no difference. M1, M2 and M6 get no "necessary" call in any removal. Three seeds per removal can only show large effects.</figcaption>
+          </figure>
+          <details class="table-view"><summary>Per-seed values (table)</summary>
+          <div class="table-scroll">
+<!-- BEGIN v1 ablation table (tools/make_v1_charts.py) -->
+<table class="table is-narrow result-table">
+<caption>M3 success at epoch 6,000 (196,608,000 frames per run), physics v1. Per-seed rates in seed order (full recipe: seeds 1, 2, 4, 5, 6, 7, 8, 9; each removal: seeds 1, 2, 4). The change is the removal's mean minus the full recipe's, with its 95 % interval; the call follows the pre-registered rule (necessary: a drop of at least 20 pp and non-overlapping 95 % intervals of the two means).</caption>
+<thead><tr><th scope="col">Run</th><th scope="col">M3 per seed</th><th scope="col">mean</th><th scope="col">95 % interval</th><th scope="col">change</th><th scope="col">call</th></tr></thead>
+<tbody>
+<tr class="group-row"><th scope="rowgroup" colspan="6">Task reward only</th></tr>
+<tr><th scope="row">full recipe</th><td class="seeds">0.979, 0.934, 0.046, 0.000, 0.263, 0.983, 0.000, 0.577</td><td>0.473</td><td>0.097 to 0.848</td><td></td><td></td></tr>
+<tr><th scope="row">history H = 1</th><td class="seeds">0.000, 0.000, 0.002</td><td>0.001</td><td>0.000 to 0.003</td><td class="wrap">−47.2 pp<br>(−84.8 to −9.6)</td><td class="wrap">necessary</td></tr>
+<tr><th scope="row">no unlock bonus</th><td class="seeds">0.000, 0.171, 0.000</td><td>0.057</td><td>0.000 to 0.302</td><td class="wrap">−41.6 pp<br>(−80.2 to −3.0)</td><td class="wrap">not necessary (intervals overlap)</td></tr>
+<tr><th scope="row">no curriculum</th><td class="seeds">0.000, 0.000, 0.000</td><td>0.000</td><td>0.000 to 0.003</td><td class="wrap">−47.3 pp<br>(−84.8 to −9.7)</td><td class="wrap">necessary</td></tr>
+<tr class="group-row"><th scope="rowgroup" colspan="6">With posture regularisers (N1)</th></tr>
+<tr><th scope="row">full recipe</th><td class="seeds">0.673, 0.000, 0.000, 0.000, 0.000, 0.846, 0.597, 0.990</td><td>0.388</td><td>0.028 to 0.748</td><td></td><td></td></tr>
+<tr><th scope="row">history H = 1</th><td class="seeds">1.000, 1.000, 1.000</td><td>1.000</td><td>0.997 to 1.000</td><td class="wrap">+61.2 pp<br>(+25.2 to +97.2)</td><td class="wrap">raised M3</td></tr>
+<tr><th scope="row">no unlock bonus</th><td class="seeds">0.000, 0.404, 0.981</td><td>0.461</td><td>0.000 to 1.000</td><td class="wrap">+7.3 pp<br>(−91.3 to +106.0)</td><td class="wrap">no difference resolved</td></tr>
+<tr><th scope="row">no curriculum</th><td class="seeds">0.000, 0.000, 0.000</td><td>0.000</td><td>0.000 to 0.003</td><td class="wrap">−38.8 pp<br>(−74.8 to −2.8)</td><td class="wrap">necessary</td></tr>
+</tbody>
+</table>
+<!-- END v1 ablation table -->
+          </div>
+          </details>
         </div>
       </div></div></div>
     </section>
@@ -117,8 +187,8 @@
         <h2 id="status-title" class="title is-3 has-text-centered">Status</h2>
         <div class="content">
           <ul>
-            <li><strong>Main result:</strong> eight training seeds per arm with a pre-registered budget and evaluation protocol (running).</li>
-            <li><strong>Ablations:</strong> observation history, unlock bonus and threshold curriculum, each removed in turn.</li>
+            <li><strong>First full study, physics v1 (complete):</strong> both arms with eight seeds each and the three single-component ablations, shown above.</li>
+            <li><strong>Main study, physics v2 (training):</strong> the same arms and ablations re-run with 255 solver iterations for the hand and the closure, under a pre-registered budget and evaluation protocol. The clips on this page come from seed 4 of its first three seeds (see the clip caption).</li>
             <li><strong>Baselines:</strong> hand-designed closed-loop scripts that use the same inputs, including one that is told the family.</li>
             <li><strong>Analysis:</strong> when and how the policy recognises the closure type.</li>
             <li><strong>Robustness:</strong> halved physics time step and out-of-range mechanism parameters.</li>

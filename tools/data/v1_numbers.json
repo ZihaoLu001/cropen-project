@@ -1,0 +1,470 @@
+{
+ "sources": {
+  "task/table.json": "785cbd7ff07a791ad2db732df816ce0cf5a09b54730e2bd243b91980976413fd",
+  "n1/table.json": "8edb5d8c4b9a8a183ec75218bda057b256f632ee9e5372d61808894d0d7a15f9",
+  "v1/gd_task.json": "eca7e9b9976bec42c074f7f7690b7f99150a3fd3e2095e21a59eb88ce06e3b66",
+  "v1/gd_n1.json": "805e393662268392047bcce72cdcaa4d2e0ae0c958fb278c00482fe33d72f0f6",
+  "v1/cost.json": "730da4adc26759a09d7e364bf69e421061237e83cf113bfb04258d3307942d2e"
+ },
+ "success_e10000": {
+  "task-only": {
+   "runs": [
+    "cropen_ppo_e3_s1",
+    "cropen_ppo_e3_s2",
+    "cropen_ppo_e3_s4",
+    "cropen_ppo_e3_s5",
+    "cropen_ppo_e3_s6",
+    "cropen_ppo_e3_s7",
+    "cropen_ppo_e3_s8",
+    "cropen_ppo_e3_s9"
+   ],
+   "seeds": [
+    1,
+    2,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "families": {
+    "M1": {
+     "per_seed": [
+      1.0,
+      1.0,
+      0.9982078853046595,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "mean": 0.9997759856630825,
+     "sd": 0.0006336082268696526,
+     "lo": 0.9992462759293027,
+     "hi": 1.0,
+     "method": "95 % t-interval of the mean, clipped to [0, 1]"
+    },
+    "M2": {
+     "per_seed": [
+      0.9920634920634921,
+      0.9940476190476191,
+      0.9726027397260274,
+      0.9963031423290203,
+      0.9833333333333333,
+      0.9980544747081712,
+      0.9830508474576272,
+      0.9938271604938271
+     ],
+     "mean": 0.9891603511448896,
+     "sd": 0.008698540861904571,
+     "lo": 0.9818881889966865,
+     "hi": 0.9964325132930928,
+     "method": "95 % t-interval of the mean, clipped to [0, 1]"
+    },
+    "M3": {
+     "per_seed": [
+      0.9847328244274809,
+      0.9719101123595506,
+      0.16352201257861634,
+      0.0,
+      0.44751381215469616,
+      0.9943609022556391,
+      0.0,
+      0.9092783505154639
+     ],
+     "mean": 0.5589147517864309,
+     "sd": 0.45634748464825703,
+     "lo": 0.17739870708739464,
+     "hi": 0.9404307964854672,
+     "method": "95 % t-interval of the mean, clipped to [0, 1]"
+    },
+    "M6": {
+     "per_seed": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.998015873015873,
+      1.0
+     ],
+     "mean": 0.9997519841269842,
+     "sd": 0.0007014948226056995,
+     "lo": 0.9991655197788709,
+     "hi": 1.0,
+     "method": "95 % t-interval of the mean, clipped to [0, 1]"
+    },
+    "balanced": {
+     "per_seed": [
+      0.9941990791227432,
+      0.9914894328517924,
+      0.7835831594023258,
+      0.7490757855822551,
+      0.8577117863720074,
+      0.9981038442409526,
+      0.745266680118375,
+      0.9757763777523227
+     ],
+     "mean": 0.8869007681803468,
+     "sd": 0.11544892506020936,
+     "lo": 0.7903830514503511,
+     "hi": 0.9834184849103424,
+     "method": "95 % t-interval of the mean"
+    }
+   }
+  },
+  "N1": {
+   "runs": [
+    "cropen_ppo_e3n_s1",
+    "cropen_ppo_e3n_s2",
+    "cropen_ppo_e3n_s4",
+    "cropen_ppo_e3n_s5",
+    "cropen_ppo_e3n_s6",
+    "cropen_ppo_e3n_s7",
+    "cropen_ppo_e3n_s8",
+    "cropen_ppo_e3n_s9"
+   ],
+   "seeds": [
+    1,
+    2,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "families": {
+    "M1": {
+     "per_seed": [
+      1.0,
+      1.0,
+      0.9921722113502935,
+      1.0,
+      0.998,
+      1.0,
+      0.99800796812749,
+      1.0
+     ],
+     "mean": 0.998522522434723,
+     "sd": 0.0027197412292451844,
+     "lo": 0.996248761865655,
+     "hi": 1.0,
+     "method": "95 % t-interval of the mean, clipped to [0, 1]"
+    },
+    "M2": {
+     "per_seed": [
+      0.9981343283582089,
+      0.997946611909651,
+      0.993963782696177,
+      0.9939393939393939,
+      0.9464944649446494,
+      0.9959266802443992,
+      0.9828571428571429,
+      0.998003992015968
+     ],
+     "mean": 0.9884082996206988,
+     "sd": 0.01766036592122481,
+     "lo": 0.9736438642269184,
+     "hi": 1.0,
+     "method": "95 % t-interval of the mean, clipped to [0, 1]"
+    },
+    "M3": {
+     "per_seed": [
+      0.7634194831013916,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.9672447013487476,
+      0.5695238095238095,
+      1.0
+     ],
+     "mean": 0.4125234992467436,
+     "sd": 0.4600192371186094,
+     "lo": 0.027937792663447147,
+     "hi": 0.79710920583004,
+     "method": "95 % t-interval of the mean, clipped to [0, 1]"
+    },
+    "M6": {
+     "per_seed": [
+      1.0,
+      1.0,
+      0.9982238010657194,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.9980314960629921
+     ],
+     "mean": 0.9995319121410889,
+     "sd": 0.000868252798512665,
+     "lo": 0.9988060346362688,
+     "hi": 1.0,
+     "method": "95 % t-interval of the mean, clipped to [0, 1]"
+    },
+    "balanced": {
+     "per_seed": [
+      0.9403884528649001,
+      0.7494866529774127,
+      0.7460899487780475,
+      0.7484848484848485,
+      0.7361236162361624,
+      0.9907928453982867,
+      0.8875972301271106,
+      0.9990088720197401
+     ],
+     "mean": 0.8497465583608136,
+     "sd": 0.1169754357364164,
+     "lo": 0.7519526467684177,
+     "hi": 0.9475404699532095,
+     "method": "95 % t-interval of the mean"
+    }
+   }
+  }
+ },
+ "gd_m3_e6000": {
+  "task-only": {
+   "wording_suffix": "in physics v1",
+   "primary_seeds": [
+    1,
+    2,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "ablations": {
+    "hist1": {
+     "change": "--obs-history 1",
+     "seeds": [
+      1,
+      2,
+      4
+     ],
+     "per_seed": [
+      0.0,
+      0.0,
+      0.001890359168241966
+     ],
+     "mean": 0.000630119722747322,
+     "lo": 0.0,
+     "hi": 0.0033413060678950616,
+     "method": "95 % t-interval of the mean, clipped to [0, 1]",
+     "gap_pp": 47.2123956046191,
+     "necessary": true,
+     "difference_resolved": true,
+     "diff_pp": [
+      9.645240717868313,
+      84.77955049136987
+     ],
+     "wording": "The observation history is necessary for M3 in physics v1 (removing it changed M3 by -47.2 pp; gap >= 20 pp and the two arms' 95 % intervals do not overlap)"
+    },
+    "nounlock": {
+     "change": "--r-unlock 0.0",
+     "seeds": [
+      1,
+      2,
+      4
+     ],
+     "per_seed": [
+      0.0,
+      0.17063492063492064,
+      0.0
+     ],
+     "mean": 0.05687830687830688,
+     "lo": 0.0,
+     "hi": 0.30160590923178154,
+     "method": "95 % t-interval of the mean, clipped to [0, 1]",
+     "gap_pp": 41.58757688906314,
+     "necessary": false,
+     "difference_resolved": true,
+     "diff_pp": [
+      3.013711051392515,
+      80.16144272673378
+     ],
+     "wording": "removing the unlock bonus changed M3 by -41.6 pp in physics v1 (95 % interval -80.2 to -3.0 pp, Welch two-sample t, Satterthwaite df)"
+    },
+    "nocurr": {
+     "change": "no --gate-curriculum (and its three gate flags)",
+     "seeds": [
+      1,
+      2,
+      4
+     ],
+     "per_seed": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "mean": 0.0,
+     "lo": 0.0,
+     "hi": 0.003012237047726965,
+     "method": "all seeds the same rate: Agresti-Coull 95 % of the pooled episodes",
+     "gap_pp": 47.275407576893826,
+     "necessary": true,
+     "difference_resolved": true,
+     "diff_pp": [
+      9.7083085848308,
+      84.84250656895686
+     ],
+     "wording": "The gate curriculum is necessary for M3 in physics v1 (removing it changed M3 by -47.3 pp; gap >= 20 pp and the two arms' 95 % intervals do not overlap)"
+    }
+   },
+   "primary": {
+    "per_seed": [
+     0.9794238683127572,
+     0.9343629343629344,
+     0.04642166344294004,
+     0.0,
+     0.26258992805755393,
+     0.9825918762088974,
+     0.0,
+     0.5766423357664233
+    ],
+    "mean": 0.4727540757689383,
+    "lo": 0.09708308584830794,
+    "hi": 0.8484250656895687,
+    "method": "95 % t-interval of the mean, clipped to [0, 1]"
+   }
+  },
+  "N1": {
+   "wording_suffix": "in the N1 recipe in physics v1",
+   "primary_seeds": [
+    1,
+    2,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "ablations": {
+    "hist1": {
+     "change": "--obs-history 1",
+     "seeds": [
+      1,
+      2,
+      4
+     ],
+     "per_seed": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "mean": 1.0,
+     "lo": 0.9969897184363551,
+     "hi": 1.0,
+     "method": "all seeds the same rate: Agresti-Coull 95 % of the pooled episodes",
+     "gap_pp": -61.184153978856415,
+     "necessary": false,
+     "difference_resolved": true,
+     "diff_pp": [
+      -97.19200599898063,
+      -25.1763019587322
+     ],
+     "wording": "removing the observation history changed M3 by +61.2 pp in the N1 recipe in physics v1 (95 % interval +25.2 to +97.2 pp, y constant: one-sample t of x (df n - 1), shifted)"
+    },
+    "nounlock": {
+     "change": "--r-unlock 0.0",
+     "seeds": [
+      1,
+      2,
+      4
+     ],
+     "per_seed": [
+      0.0,
+      0.40350877192982454,
+      0.9807321772639692
+     ],
+     "mean": 0.4614136497312646,
+     "lo": 0.0,
+     "hi": 1.0,
+     "method": "95 % t-interval of the mean, clipped to [0, 1]",
+     "gap_pp": -7.3255189519828745,
+     "necessary": false,
+     "difference_resolved": false,
+     "diff_pp": [
+      -105.97433622778442,
+      91.32329832381868
+     ],
+     "wording": "removing the unlock bonus: no difference resolved for M3 in the N1 recipe in physics v1 (+7.3 pp, 95 % interval -91.3 to +106.0 pp, Welch two-sample t, Satterthwaite df)"
+    },
+    "nocurr": {
+     "change": "no --gate-curriculum (and its three gate flags)",
+     "seeds": [
+      1,
+      2,
+      4
+     ],
+     "per_seed": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "mean": 0.0,
+     "lo": 0.0,
+     "hi": 0.003041877177351984,
+     "method": "all seeds the same rate: Agresti-Coull 95 % of the pooled episodes",
+     "gap_pp": 38.81584602114358,
+     "necessary": true,
+     "difference_resolved": true,
+     "diff_pp": [
+      2.8079940010193702,
+      74.8236980412678
+     ],
+     "wording": "The gate curriculum is necessary for M3 in the N1 recipe in physics v1 (removing it changed M3 by -38.8 pp; gap >= 20 pp and the two arms' 95 % intervals do not overlap)"
+    }
+   },
+   "primary": {
+    "per_seed": [
+     0.6730038022813688,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.8455598455598455,
+     0.5969289827255279,
+     0.9897750511247444
+    ],
+    "mean": 0.38815846021143585,
+    "lo": 0.028079940010193705,
+    "hi": 0.748236980412678,
+    "method": "95 % t-interval of the mean, clipped to [0, 1]"
+   }
+  }
+ },
+ "cost_n1_minus_task_e10000_pp": {
+  "M1": [
+   -0.12534632283595082,
+   -0.3542676960229231,
+   0.10357505035102142
+  ],
+  "M2": [
+   -0.07520515241908887,
+   -1.6217651730120075,
+   1.4713548681738295
+  ],
+  "M3": [
+   -14.639125253968732,
+   -63.77509436383716,
+   34.4968438558997
+  ],
+  "M6": [
+   -0.02200719858952427,
+   -0.10700200195128136,
+   0.06298760477223282
+  ],
+  "balanced": [
+   -3.7154209819533213,
+   -16.17840836779605,
+   8.747566403889405
+  ]
+ }
+}
