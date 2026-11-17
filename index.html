@@ -131,7 +131,7 @@
         <div class="content has-text-justified">
           <p>These results come from a preliminary study with earlier simulator settings (physics v1). We trained two variants, without and with posture regularization (a relaxed reset pose and small posture penalties), with eight seeds each for 10,000 epochs.</p>
         </div>
-        <h3 class="title is-5 claim">In physics v1, squeeze-and-turn was the hard case</h3>
+        <h3 class="title is-5 claim">In the preliminary study, squeeze-and-turn was the hard case</h3>
         <figure class="page-figure chart">
           <a href="./static/images/v1_success_e10000.svg?v=v7" target="_blank" rel="noopener" title="Open the chart at full size"><picture><source media="(max-width: 600px)" srcset="./static/images/v1_success_e10000_phone.svg?v=v7" width="420" height="440"><img src="./static/images/v1_success_e10000.svg?v=v7" alt="Success per closure type at epoch 10,000, eight seeds per variant. Plain thread, push-and-turn and stuck seal: 99 to 100% mean success without and with posture regularization; squeeze-and-turn: 56% without and 41% with it, with seeds spread from 0 to 100%." width="820" height="276" loading="lazy"></picture></a>
           <figcaption>Each circle is one seed's final policy (epoch 10,000; eight seeds per variant); bars show the mean and its 95% interval. An episode succeeds when the cap comes off the thread and is then lifted 1 cm.</figcaption>
