@@ -263,6 +263,7 @@
       9.645240717868313,
       84.77955049136987
      ],
+     "diff_method": "Welch two-sample t, Satterthwaite df",
      "wording": "The observation history is necessary for M3 in physics v1 (removing it changed M3 by -47.2 pp; gap >= 20 pp and the two arms' 95 % intervals do not overlap)"
     },
     "nounlock": {
@@ -288,6 +289,7 @@
       3.013711051392515,
       80.16144272673378
      ],
+     "diff_method": "Welch two-sample t, Satterthwaite df",
      "wording": "removing the unlock bonus changed M3 by -41.6 pp in physics v1 (95 % interval -80.2 to -3.0 pp, Welch two-sample t, Satterthwaite df)"
     },
     "nocurr": {
@@ -313,7 +315,88 @@
       9.7083085848308,
       84.84250656895686
      ],
+     "diff_method": "y constant: one-sample t of x (df n - 1), shifted",
      "wording": "The gate curriculum is necessary for M3 in physics v1 (removing it changed M3 by -47.3 pp; gap >= 20 pp and the two arms' 95 % intervals do not overlap)"
+    }
+   },
+   "other_families": {
+    "hist1": {
+     "M1": {
+      "per_seed": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "necessary": false
+     },
+     "M2": {
+      "per_seed": [
+       0.9863813229571985,
+       0.9958762886597938,
+       0.9898373983739838
+      ],
+      "necessary": false
+     },
+     "M6": {
+      "per_seed": [
+       0.9979959919839679,
+       1.0,
+       1.0
+      ],
+      "necessary": false
+     }
+    },
+    "nounlock": {
+     "M1": {
+      "per_seed": [
+       0.9961685823754789,
+       1.0,
+       0.0
+      ],
+      "necessary": false
+     },
+     "M2": {
+      "per_seed": [
+       0.9979633401221996,
+       0.9944341372912802,
+       0.0
+      ],
+      "necessary": false
+     },
+     "M6": {
+      "per_seed": [
+       1.0,
+       1.0,
+       0.0
+      ],
+      "necessary": false
+     }
+    },
+    "nocurr": {
+     "M1": {
+      "per_seed": [
+       0.0,
+       0.0,
+       0.9980732177263969
+      ],
+      "necessary": false
+     },
+     "M2": {
+      "per_seed": [
+       0.0,
+       0.0,
+       0.982725527831094
+      ],
+      "necessary": false
+     },
+     "M6": {
+      "per_seed": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "necessary": false
+     }
     }
    },
    "primary": {
@@ -369,6 +452,7 @@
       -97.19200599898063,
       -25.1763019587322
      ],
+     "diff_method": "y constant: one-sample t of x (df n - 1), shifted",
      "wording": "removing the observation history changed M3 by +61.2 pp in the N1 recipe in physics v1 (95 % interval +25.2 to +97.2 pp, y constant: one-sample t of x (df n - 1), shifted)"
     },
     "nounlock": {
@@ -394,6 +478,7 @@
       -105.97433622778442,
       91.32329832381868
      ],
+     "diff_method": "Welch two-sample t, Satterthwaite df",
      "wording": "removing the unlock bonus: no difference resolved for M3 in the N1 recipe in physics v1 (+7.3 pp, 95 % interval -91.3 to +106.0 pp, Welch two-sample t, Satterthwaite df)"
     },
     "nocurr": {
@@ -419,7 +504,88 @@
       2.8079940010193702,
       74.8236980412678
      ],
+     "diff_method": "y constant: one-sample t of x (df n - 1), shifted",
      "wording": "The gate curriculum is necessary for M3 in the N1 recipe in physics v1 (removing it changed M3 by -38.8 pp; gap >= 20 pp and the two arms' 95 % intervals do not overlap)"
+    }
+   },
+   "other_families": {
+    "hist1": {
+     "M1": {
+      "per_seed": [
+       1.0,
+       0.997907949790795,
+       1.0
+      ],
+      "necessary": false
+     },
+     "M2": {
+      "per_seed": [
+       0.9980732177263969,
+       1.0,
+       0.9980582524271845
+      ],
+      "necessary": false
+     },
+     "M6": {
+      "per_seed": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "necessary": false
+     }
+    },
+    "nounlock": {
+     "M1": {
+      "per_seed": [
+       0.9962546816479401,
+       1.0,
+       1.0
+      ],
+      "necessary": false
+     },
+     "M2": {
+      "per_seed": [
+       0.9723247232472325,
+       0.9906367041198502,
+       0.9960629921259843
+      ],
+      "necessary": false
+     },
+     "M6": {
+      "per_seed": [
+       0.9980237154150198,
+       1.0,
+       1.0
+      ],
+      "necessary": false
+     }
+    },
+    "nocurr": {
+     "M1": {
+      "per_seed": [
+       0.0,
+       0.9943502824858758,
+       0.9922027290448343
+      ],
+      "necessary": false
+     },
+     "M2": {
+      "per_seed": [
+       0.0,
+       0.0,
+       0.998015873015873
+      ],
+      "necessary": false
+     },
+     "M6": {
+      "per_seed": [
+       0.0,
+       0.9959349593495935,
+       0.9981308411214953
+      ],
+      "necessary": false
+     }
     }
    },
    "primary": {

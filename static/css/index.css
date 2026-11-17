@@ -39,7 +39,6 @@ sup { font-size: .7em; }
 .media-caption { margin-top: .8rem; font-size: .9rem; }
 .muted, .citation-note { color: #747474; }
 .method-figure { margin: 1rem 0 2rem; }
-.method-figure img { display: block; width: 100%; height: auto; }
 .method-steps .title { line-height: 1.35; margin-bottom: .65rem; }
 .method-steps p { font-size: .96rem; line-height: 1.7; }
 .method-steps .column { padding-left: 1rem; padding-right: 1rem; }
@@ -95,7 +94,6 @@ sup { font-size: .7em; }
 .result-figure { margin: 1.5rem 0; }
 .result-figure img { width: 100%; height: auto; border-radius: 6px; }
 .result-figure figcaption { margin-top: 0.5rem; font-size: 0.95rem; color: #52514e; }
-.method-figure img { width: 100%; height: auto; }
 #teaser-video, #family-video { width: 100%; height: auto; border-radius: 8px; background: #000; }
 .mech-figure { margin: 0 0 2rem; }
 .mech-figure img, .method-figure img { display: block; width: 100%; height: auto; }
@@ -121,3 +119,13 @@ sup { font-size: .7em; }
 .table-view .result-table tbody th[scope="row"] { white-space: nowrap; }
 .table-view .result-table td.wrap { white-space: normal; min-width: 8.6em; }
 .result-figure a { display: block; cursor: zoom-in; }
+/* the method figure is a white card on the tinted Method section */
+.method-figure a { background: #fff; border-radius: 10px; padding: 10px; box-shadow: 0 0 0 1px #e7e5e0; }
+/* phones: figures and charts keep a readable size and scroll sideways inside their own box */
+.fig-hint { display: none; }
+@media (max-width: 600px) {
+  .fig-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .fig-scroll > a { width: max-content; }
+  .fig-scroll img { width: 760px; max-width: none; }
+  .fig-hint { display: block; margin: .35rem 0 0; font-size: .8rem; color: #747474; }
+}
