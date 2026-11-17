@@ -15,8 +15,10 @@ with a Dexterous Hand (CR-Open)**. Work in progress; all results are in simulati
 - Everything is local (vendored Bulma 1.0.4, Google Sans and Noto Sans, two Font Awesome SVGs; no CDN, no
   analytics), so the page loads where Google and CDN hosts are blocked. Licence notices are in `static/vendor/`; the
   footer keeps the Nerfies credit. Bulma is its build without dark mode (`bulma-no-dark-mode.min.css`), as the page
-  and its figures are light-only; `static/css/index.css` sets Bulma 1.0's CSS variables (neutral greys, Noto Sans
-  text, Google Sans buttons, 4px corners, button weight, padding and focus glow) to keep the page's look.
+  and its figures are light-only. To keep the page's look, `static/css/index.css` sets Bulma 1.0's CSS variables
+  (neutral greys, Noto Sans text, bold `<strong>`, semibold titles, 4px corners, button weight and padding, hover and
+  press borders, focus glow, no colour transitions) and a few plain rules: a fixed button height, no button shadow,
+  and 0.9's system font and icon spacing on the two "coming soon" buttons (Google Sans stays on the clip buttons).
 - On phones (width up to 600 px) the mechanism figure switches to a 2 x 2 version (`<picture>`;
   `mechanisms_phone.svg`); the method figure keeps a readable width and scrolls
   sideways inside its own box (a corner chip marks it); the page itself never scrolls sideways.

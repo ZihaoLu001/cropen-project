@@ -3,8 +3,9 @@
    titles, a TL;DR callout under the title block, one figure and one paragraph per section and red numbered badges. */
 :root { color-scheme: light; --accent: #c8102e; --ink: #363636; --muted: #6b6b6b; --link: #1a73c9; }
 /* Bulma 1.0 settings: neutral greys (1.0's default scheme is tinted blue), Noto Sans body text in the page's ink
-   colour, bold <strong>, semibold titles, 4px corners and a blue border and glow as the keyboard-focus mark of
-   buttons */
+   colour, bold <strong>, semibold titles, 4px corners, a blue border and glow as the keyboard-focus mark of
+   buttons, and no colour transitions (as in 0.9; 1.0's 294 ms fade showed a newly selected clip button as grey text
+   on grey for a moment) */
 :root {
   --bulma-scheme-h: 0; --bulma-scheme-s: 0%; --bulma-text-h: 0; --bulma-text-s: 0%;
   --bulma-family-primary: 'Noto Sans', sans-serif;
@@ -12,6 +13,7 @@
   --bulma-strong-weight: var(--bulma-weight-bold);
   --bulma-radius: 4px;
   --bulma-focus-h: 217; --bulma-focus-s: 71%; --bulma-focus-l: 53%; --bulma-focus-shadow-size: 0 0 0 .125em;
+  --bulma-duration: 0s;
 }
 .title { --bulma-title-weight: var(--bulma-weight-semibold); }
 /* buttons: regular weight, 1em side padding (1.0 subtracts the 1px border from it), a darker border on hover and
@@ -32,6 +34,9 @@ body { background: #fff; }
 a { color: var(--link); }
 a:hover { color: #11579a; }
 a:focus-visible, button:focus-visible, video:focus-visible, summary:focus-visible { outline: 3px solid #1679b0; outline-offset: 3px; }
+/* the clip buttons get the same ring (Bulma's .button:focus-visible { outline: none } would leave the selected, dark
+   button with only a faint glow, and no mark at all in Windows contrast themes) */
+.clip-tabs .button:focus-visible { outline: 3px solid #1679b0; outline-offset: 2px; z-index: 5; }
 .skip-link { position: fixed; left: 1rem; top: -5rem; padding: .7rem 1rem; background: #fff; z-index: 30; }
 .skip-link:focus { top: 1rem; }
 
@@ -43,13 +48,13 @@ a:focus-visible, button:focus-visible, video:focus-visible, summary:focus-visibl
 .more-research summary::after { content: ""; display: inline-block; width: .4em; height: .4em; margin-left: .55em; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-.2em) rotate(45deg); }
 .more-research[open] summary::after { transform: translateY(.05em) rotate(-135deg); }
 .more-research summary:hover, .more-research[open] summary { background: #f5f5f5; }
-.more-research-menu { position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); min-width: 15rem; padding: .4rem 0; background: #fff; border-radius: 6px; box-shadow: 0 8px 16px rgba(10, 10, 10, .1), 0 0 0 1px rgba(10, 10, 10, .06); z-index: 20; }
+.more-research-menu { position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); min-width: 15rem; padding: .4rem 0; background: #fff; border-radius: 6px; outline: 1px solid transparent; outline-offset: -1px; box-shadow: 0 8px 16px rgba(10, 10, 10, .1), 0 0 0 1px rgba(10, 10, 10, .06); z-index: 20; }
 .more-research-menu a { display: block; padding: .45rem 1rem; color: var(--ink); white-space: nowrap; text-align: center; }
 .more-research-menu a:hover { background: #f5f5f5; color: var(--link); }
 
 /* title block */
 .hero-body { padding: 2rem 1.5rem 1.25rem; }
-.publication-title, .publication-authors, .button { font-family: 'Google Sans', sans-serif; }
+.publication-title, .publication-authors, .clip-tabs .button { font-family: 'Google Sans', sans-serif; }
 .publication-title { line-height: 1.15; margin-bottom: 1.25rem !important; text-wrap: balance; }
 .publication-subtitle { display: block; max-width: 46rem; margin: .6rem auto 0; font-size: 2rem; line-height: 1.25; text-wrap: balance; }
 .publication-authors { line-height: 1.6; }
@@ -59,6 +64,11 @@ a:focus-visible, button:focus-visible, video:focus-visible, summary:focus-visibl
 .publication-links { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin-top: 1rem; }
 .button.is-pending[disabled] { background: #f2f2f2; border-color: #e0e0e0; color: var(--muted); opacity: 1; cursor: default; }
 .button.is-pending .icon img { height: 16px; width: auto; opacity: .55; }
+/* the two pills keep their 0.9 look: 0.9's system font stack (they are <button>s, which 1.0 gives the body font) and
+   0.9's icon spacing (1.0 derives it from the button padding); with Google Sans they no longer fit on one row at
+   410-417 px */
+.publication-links .button { font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+.publication-links .button .icon:first-child:not(:last-child) { margin-inline-start: calc(-.5em - 1px); margin-inline-end: .25em; }
 .hero .tldr-wrap { max-width: 820px; margin: 1.25rem auto 0; text-align: left; }
 
 /* sections */
@@ -101,6 +111,7 @@ video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; backgro
 @media (max-width: 600px) {
   .fig-scroll { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
   .fig-scroll > a { width: 700px; }
+  .fig-scroll > a:focus-visible { outline-offset: -3px; } /* inside the scroll box, which would clip it */
   .fig-frame::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 24px; pointer-events: none; background: linear-gradient(to right, rgba(255, 255, 255, 0), #fff); }
   .swipe-chip { display: flex; align-items: center; justify-content: center; position: absolute; top: 6px; right: 6px; width: 34px; height: 22px; border-radius: 11px; background: rgba(54, 54, 54, .75); color: #fff; pointer-events: none; z-index: 1; }
 }
@@ -125,3 +136,7 @@ video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; backgro
   .clip-tabs.buttons.has-addons .button { margin: 0 !important; border-radius: var(--bulma-radius-rounded); font-size: .85rem; padding-left: .8em; padding-right: .8em; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+/* Windows contrast themes: keep the selected clip button marked (system colours would draw it like the others) */
+@media (forced-colors: active) {
+  .clip-tabs .button.is-selected { forced-color-adjust: none; background: Highlight; border-color: Highlight; color: HighlightText; outline-color: CanvasText; }
+}
