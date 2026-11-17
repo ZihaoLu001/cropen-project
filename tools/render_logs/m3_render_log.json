@@ -1,6 +1,6 @@
 {
  "family": "M3",
- "ckpt": "/workspace/dexrl_local_b/runs/cropen_ppo_e3n_s9/ckpt_10000.pt",
+ "ckpt": "/workspace/sitemedia/ck/cropen_ppo_e3nv2_s4/ckpt_10000.pt",
  "seed": 300,
  "eye": [
   0.1,
@@ -15,19 +15,33 @@
  "attempts": [
   {
    "attempt": 0,
-   "steps": 310,
-   "seconds": 10.33,
+   "steps": 469,
+   "seconds": 15.63,
    "success": true,
-   "frames": 310
+   "frames": 469
   }
  ],
  "n1": {
-  "reset_pose": "/workspace/sitemedia/cropen_nat/data/pose_n1.json",
-  "flex_floor": "/workspace/sitemedia/cropen_nat/data/flex_floor_n1.json",
+  "reset_pose": "/workspace/sitemedia/v2copy/dexrl-cropen-v2/cropen/data/pose_n1.json",
+  "flex_floor": "/workspace/sitemedia/v2copy/dexrl-cropen-v2/cropen/data/flex_floor_n1.json",
   "readback": {
    "floor_err": 1.4901161138336505e-09,
    "reset_pose_err": 4.901885986008381e-08
   }
+ },
+ "physics": {
+  "solver_pos_iters": 255,
+  "version": "v2",
+  "requested": 255,
+  "readback": 255,
+  "readback_matches_cfg": true,
+  "train": 255,
+  "file": "/workspace/sitemedia/final_v2/m3_physics.json",
+  "gpu": "NVIDIA GeForce RTX 4080"
+ },
+ "code_sha256": {
+  "render_demo.py": "77f823dbe9f7693c2a75c6e7dd8c107a75fa21ff963bbab8a186069ad4824292",
+  "physics_v2.py": "17dc0f683488de1cf5ca8e34ab01059ab342b4d2230b0fad5d164d90352a9986"
  },
  "note": "presentation media: family forced via cfg.families; first successful attempt kept; all attempts listed"
 }

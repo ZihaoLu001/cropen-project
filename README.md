@@ -5,7 +5,8 @@ with a Dexterous Hand (CR-Open)**. Work in progress; all results are in simulati
 
 - `index.html`, `static/css/index.css`, `static/js/index.js`: the page (adapted from the Nerfies template, as in
   ZihaoLu001/oap-project; licence notices in `static/vendor/`).
-- `static/videos/`: simulation clips of one trained policy (seed 3, epoch 8000) rendered with
+- `static/videos/`: simulation clips of one trained policy (stage-1 seed 4 of the N1 arm, physics v2 at 255 position
+  iterations, epoch 10000; chosen after the three stage-1 seeds' epoch-10000 rates were read) rendered with
   `tools/render_demo.py` (presentation media: the family is fixed per clip, the first successful episode is kept,
   every attempt is listed in the `*_render_log.json` files).
 - `static/images/curve_seed3.svg`, `bars_seed3_e8000.svg`: made by `tools/make_charts.py` from the formal

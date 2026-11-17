@@ -1,0 +1,142 @@
+{
+  "kind": "cropen_physics",
+  "entry": "render_demo.py",
+  "rule": "P1-A3 (docs/p1a3/decisions.md D1, D5)",
+  "requested_solver_pos_iters": 255,
+  "solver_pos_iters": 255,
+  "version": "v2",
+  "cfg": {
+    "robot": {
+      "position": [
+        255
+      ],
+      "velocity": [
+        0
+      ]
+    },
+    "closure": {
+      "position": [
+        255
+      ],
+      "velocity": [
+        1
+      ]
+    }
+  },
+  "scene_clamp": {
+    "min_position": 1,
+    "max_position": 255,
+    "min_velocity": 0,
+    "max_velocity": 255
+  },
+  "solver_type": 1,
+  "sim_dt": 0.008333333333333333,
+  "decimation": 4,
+  "render_interval": 4,
+  "step_dt": 0.03333333333333333,
+  "readback": {
+    "available": true,
+    "source": "USD stage: physxArticulation solver iteration attributes on the PhysxArticulationAPI prims of the Robot and Closure subtrees (env 0 and the last env) and the physics scene's clamp; IsaacLab 3's PhysX articulation view has no getter for solver iteration counts",
+    "counts": {
+      "robot": {
+        "position": [
+          255
+        ],
+        "velocity": [
+          0
+        ]
+      },
+      "closure": {
+        "position": [
+          255
+        ],
+        "velocity": [
+          1
+        ]
+      }
+    },
+    "found": {
+      "robot": true,
+      "closure": true
+    },
+    "robot": [
+      {
+        "env": 0,
+        "path": "/World/envs/env_0/Robot",
+        "found": true,
+        "prims": [
+          {
+            "path": "/World/envs/env_0/Robot",
+            "articulation_root": true,
+            "position": 255,
+            "velocity": 0
+          }
+        ]
+      }
+    ],
+    "closure": [
+      {
+        "env": 0,
+        "path": "/World/envs/env_0/Closure",
+        "found": true,
+        "prims": [
+          {
+            "path": "/World/envs/env_0/Closure/Geometry",
+            "articulation_root": true,
+            "position": 255,
+            "velocity": 1
+          }
+        ]
+      }
+    ],
+    "scene": {
+      "path": "/physicsScene",
+      "min_position": 1,
+      "max_position": 255,
+      "min_velocity": 0,
+      "max_velocity": 255,
+      "solver_type": "TGS"
+    },
+    "prim_paths": {
+      "robot": {
+        "cfg_prim_path": "/World/envs/env_[^/]+/Robot",
+        "below_env": "/Robot",
+        "default_used": false
+      },
+      "closure": {
+        "cfg_prim_path": "/World/envs/env_[^/]+/Closure",
+        "below_env": "/Closure",
+        "default_used": false
+      }
+    }
+  },
+  "readback_solver_pos_iters": 255,
+  "readback_mismatch": [],
+  "readback_found": {
+    "robot": true,
+    "closure": true
+  },
+  "readback_complete": true,
+  "readback_matches_cfg": true,
+  "gpu": "NVIDIA GeForce RTX 4080",
+  "env_vars": {
+    "DEXRL_CLOSURE_ROT_LIMIT": null,
+    "DEXRL_CLOSURE_FIX": null
+  },
+  "train_physics": {
+    "train": 255,
+    "eval": 255,
+    "same_iters": true,
+    "cross_physics": false,
+    "train_source": [
+      "/workspace/sitemedia/ck/cropen_ppo_e3nv2_s4/physics.json"
+    ],
+    "ckpts": {
+      "/workspace/sitemedia/ck/cropen_ppo_e3nv2_s4/ckpt_10000.pt": {
+        "solver_pos_iters": 255,
+        "readback_problem": null
+      }
+    }
+  },
+  "file": "/workspace/sitemedia/final_v2/m1_physics.json"
+}
