@@ -17,14 +17,23 @@ a v1-code run, 8): a clip at another count is refused before the env is built (a
 (physics_v2.record_physics: requested, cfg and read-back counts, the training count, the GPU), and the render log
 records the physics, this file's sha256 and the copy's physics_v2.py sha256. A copy older than P1-A3 (no
 physics_v2.py) renders only v1 checkpoints (it refuses a checkpoint whose physics.json is not 8).
+Mechanism visibility (opt-in; the defaults keep the earlier clips): --mech-colors (with --pretty) binds visual-only
+materials to the closure's own geometry before the simulation starts: the two squeeze tabs orange, three shell ridges
+(75-105 deg, between the tabs) blue as a rotation marker, and the inner cap teal: its 6 mm band below the shell is
+what the shell covers when it is pushed down. --state-log <json> writes the closure joints and the mechanism (VML)
+state of env 0 for every control step of the kept episode (read after the env's _get_dones, before any reset; nothing
+is written to the sim); row i belongs to video frame i. --keep-frames keeps the PNG frames for tools/overlay_mech.py.
+--still with --still-steps / --still-cams saves camera-check frames at several steps from several extra cameras.
 
 Usage: python -B render_demo.py --cropen-dir <copy>/cropen --ckpt <ckpt.pt> --family M3 --out <dir> [--still]
        [--eye x y z] [--lookat x y z] [--res 1280 720] [--attempts 8] [--seed 100] [--tag name]
        [--reset-pose pose_n1.json --flex-floor flex_floor_n1.json] [--solver-pos-iters 255]
+       [--mech-colors] [--state-log m3_state.json] [--keep-frames] [--still-steps 10 60] [--still-cams cams.json]
 """
 import argparse
 import hashlib
 import json
+import math
 import shutil
 import subprocess
 import sys
@@ -55,6 +64,17 @@ def main():
     p.add_argument("--solver-pos-iters", type=int, default=None,
                    help="P1-A3: hand and closure PhysX position iterations; must be the checkpoint's training count "
                         "(its run's physics.json; none = the pinned 8). v2 policies: 255")
+    p.add_argument("--mech-colors", action="store_true",
+                   help="with --pretty: tabs orange, a blue marker on three shell ridges, the inner cap's band teal "
+                        "(visual only, bound before the simulation starts)")
+    p.add_argument("--state-log", type=Path, default=None,
+                   help="write the per-step closure and mechanism state of the kept episode to this JSON (read only)")
+    p.add_argument("--keep-frames", action="store_true", help="keep the kept episode's PNG frames (<tag>_frames/)")
+    p.add_argument("--still-steps", type=int, nargs="+", default=None,
+                   help="with --still: save frames at these control steps (default: step 10)")
+    p.add_argument("--still-cams", type=Path, default=None,
+                   help='with --still: JSON list of extra cameras [{"name", "eye", "lookat", "focal"}]; each saves a '
+                        "JPG per still step")
     from isaaclab.app import AppLauncher
     AppLauncher.add_app_launcher_args(p)
     p.set_defaults(headless=True, enable_cameras=True)
@@ -104,6 +124,31 @@ def run(a):
         prim_path="{ENV_REGEX_NS}/DemoCam", update_period=0, width=a.res[0], height=a.res[1], data_types=["rgb"],
         spawn=sim_utils.PinholeCameraCfg(focal_length=a.focal, focus_distance=400.0, horizontal_aperture=20.955,
                                          clipping_range=(0.01, 20.0)))
+    if getattr(a, "mech_colors", False) and not a.pretty:
+        raise SystemExit("--mech-colors needs --pretty")
+    still_cams = []
+    if a.still and getattr(a, "still_cams", None) is not None:
+        still_cams = json.loads(a.still_cams.read_text())
+        for k, c in enumerate(still_cams):            # extra cameras, camera checks only (never in a clip run)
+            setattr(cfg.scene, f"demo_cam_{k}", CameraCfg(
+                prim_path=f"{{ENV_REGEX_NS}}/DemoCam{k}", update_period=0, width=a.res[0], height=a.res[1],
+                data_types=["rgb"],
+                spawn=sim_utils.PinholeCameraCfg(focal_length=float(c.get("focal", a.focal)), focus_distance=400.0,
+                                                 horizontal_aperture=20.955, clipping_range=(0.01, 20.0))))
+    state = dict(rows=[], params=None, bindings=None)
+    if getattr(a, "state_log", None) is not None:
+        # read-only state log: after the env's own _get_dones (closure joints already read this step), before the
+        # reset of a finished episode; it reads tensors only and writes nothing to the env or the sim
+        orig_dones = CROpenEnv._get_dones
+
+        def _get_dones(self):
+            out = orig_dones(self)
+            if self.recording:
+                if state["params"] is None:
+                    state["params"] = mech_params(self)
+                state["rows"].append(mech_state(self))
+            return out
+        CROpenEnv._get_dones = _get_dones
     if a.pretty:
         # Dress the stage inside scene set-up, before the simulation starts. Binding materials on the hand's link
         # prims after sim.reset() made the RTX renderer stop updating some finger links (they froze at earlier poses
@@ -112,7 +157,7 @@ def run(a):
 
         def _setup_scene(self):
             orig_setup(self)
-            dress_scene(a, sim_utils)
+            state["bindings"] = dress_scene(a, sim_utils)
         CROpenEnv._setup_scene = _setup_scene
     if p2 is not None:
         p2.apply_solver_iters(cfg, solver_iters)     # P1-A3: after the camera; None: cfg untouched
@@ -144,9 +189,14 @@ def run(a):
     org = env.scene.env_origins[0:1].to(torch.float32)
     cam.set_world_poses_from_view(torch.tensor([a.eye], device=org.device) + org,
                                   torch.tensor([a.lookat], device=org.device) + org)
+    for k, c in enumerate(still_cams):
+        env.scene[f"demo_cam_{k}"].set_world_poses_from_view(torch.tensor([c["eye"]], device=org.device) + org,
+                                                             torch.tensor([c["lookat"]], device=org.device) + org)
+    still_steps = sorted(set(getattr(a, "still_steps", None) or [10]))
+    old_still = not still_cams and still_steps == [10]   # the earlier --still: one PNG at step 10
 
-    def grab():
-        rgb = cam.data.output["rgb"]
+    def grab(c=None):
+        rgb = (c or cam).data.output["rgb"]
         rgb = rgb.torch if hasattr(rgb, "torch") else rgb
         return np.ascontiguousarray(rgb[0, ..., :3].detach().cpu().numpy().astype(np.uint8))
     targs = types.SimpleNamespace(num_envs=1, horizon=16, minibatches=2, lr=5e-4, epochs=1, seed=a.seed)
@@ -171,18 +221,33 @@ def run(a):
         player.reset()
         env.first_done[:] = False
         env.recording = True
+        state["rows"], state["params"] = [], None
         frames, steps = [], 0
         for steps in range(1, max_ep + 3):
             obs = player.env_step(wrapper, player.get_action(obs, is_deterministic=True))[0]
             frames.append(grab())
-            if a.still and len(frames) >= 10:
+            if a.still and old_still and len(frames) >= 10:
                 cv2.imwrite(str(a.out / f"{tag}_still.png"), cv2.cvtColor(frames[-1], cv2.COLOR_RGB2BGR))
                 print("still", a.out / f"{tag}_still.png", frames[-1].shape)
                 return
+            if a.still and not old_still and steps in still_steps:
+                for name, img in [("main", frames[-1])] + [(c.get("name", f"c{j}"), grab(env.scene[f"demo_cam_{j}"]))
+                                                           for j, c in enumerate(still_cams)]:
+                    f = a.out / f"{tag}_still_{name}_s{steps:03d}.jpg"
+                    cv2.imwrite(str(f), cv2.cvtColor(img, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 90])
+                    print("still", f, img.shape, flush=True)
+                if steps >= still_steps[-1] or bool(env.first_done[0]):
+                    if a.state_log is not None:
+                        write_state_log(a, tag, k, steps, None, state, still=True)
+                    return
             if bool(env.first_done[0]):
                 break
         ok = bool(env.first_success[0])
         log.append(dict(attempt=k, steps=steps, seconds=round(steps / 30, 2), success=ok, frames=len(frames)))
+        if a.state_log is not None:
+            log[-1]["state_rows"] = len(state["rows"])
+            if len(state["rows"]) != len(frames):
+                raise SystemExit(f"state log has {len(state['rows'])} rows for {len(frames)} frames")
         print(json.dumps(log[-1]), flush=True)
         if ok and frames:
             tmp = a.out / f"_frames_{tag}"
@@ -198,16 +263,84 @@ def run(a):
             pick = frames[int(0.6 * (len(frames) - 1))]
             cv2.imwrite(str(a.out / f"{tag}-poster.jpg"), cv2.cvtColor(pick, cv2.COLOR_RGB2BGR),
                         [cv2.IMWRITE_JPEG_QUALITY, 85])
+            if getattr(a, "keep_frames", False):
+                keep = a.out / f"{tag}_frames"
+                shutil.rmtree(keep, ignore_errors=True)
+                tmp.rename(keep)
             shutil.rmtree(tmp, ignore_errors=True)
+            if a.state_log is not None:
+                write_state_log(a, tag, k, steps, ok, state)
             break
     env.recording = False
+    extra = {}
+    if getattr(a, "mech_colors", False) or getattr(a, "state_log", None) is not None:
+        extra = dict(focal=a.focal, res=list(a.res), mech_colors=bool(a.mech_colors), bindings=state["bindings"],
+                     state_log=None if a.state_log is None else str(a.state_log))
     (a.out / f"{tag}_render_log.json").write_text(json.dumps(dict(
         family=a.family, ckpt=str(a.ckpt), seed=a.seed, eye=a.eye, lookat=a.lookat, attempts=log,
         n1=None if n1 is None else dict(reset_pose=str(a.reset_pose), flex_floor=str(a.flex_floor), readback=readback),
         physics=physics, code_sha256={"render_demo.py": file_sha256(Path(__file__)),
                                       "physics_v2.py": file_sha256(Path(a.cropen_dir) / "physics_v2.py")},
-        note="presentation media: family forced via cfg.families; first successful attempt kept; all attempts listed"),
-        indent=1))
+        note="presentation media: family forced via cfg.families; first successful attempt kept; all attempts listed",
+        **extra), indent=1))
+
+
+def mech_params(env):
+    """env 0's mechanism parameters for this episode (VML buffers; read only)"""
+    v = env.vml
+    names = ("th_press", "th_squeeze", "hyst", "window", "turns", "pitch", "tau_break", "slip_release",
+             "detent_pitch", "tau_detent", "tau_free", "tau_jam", "tau_thread", "k_rot")
+    out = {n: float(getattr(v, n)[0]) for n in names}
+    out["family_id"] = int(v.family[0])
+    out["lift_success"] = float(env.cfg.lift_success)
+    out["full_gates"] = bool(env.full_gates)
+    return out
+
+
+def mech_state(env):
+    """env 0's closure joints (m, rad) and mechanism state after this control step (read only; no sim writes)"""
+    q = env.closure.data.joint_pos.torch[0]
+    v, cj = env.vml, env.cj
+    vals = torch_cpu([q[cj["lift"]], q[cj["press"]], q[cj["rot"]], q[cj["squeeze_l"]], q[cj["squeeze_r"]],
+                      env.th_u[0], v.th_in[0], env.tau_shell[0], env.jam_frac[0], env._lifted[0],
+                      env.release_lift[0], v.win[0]])
+    flags = torch_cpu([v.engaged[0], v.released[0], v.broke[0], v.jam_prev[0], v.ev_unlock[0], v.ev_break[0],
+                       v.ev_release[0], v.ev_jam[0], env.succeeded[0]])
+    r = dict(step=int(env.episode_length_buf[0]))
+    r.update(zip(("lift", "press", "rot_raw", "squeeze_l", "squeeze_r", "th_u", "th_in", "tau_shell", "jam_frac",
+                  "lifted", "release_lift", "win"), vals))
+    r["jam_frac"] = r["jam_frac"] / max(int(env.n_sub), 1)
+    r.update(zip(("engaged", "released", "broke", "jam_now", "ev_unlock", "ev_break", "ev_release", "ev_jam",
+                  "success"), (bool(x) for x in flags)))
+    r["clicks"] = int(v.clicks[0])
+    return r
+
+
+def torch_cpu(xs):
+    import torch
+    return [round(float(x), 7) for x in torch.stack([x.float() for x in xs]).cpu().tolist()]
+
+
+def write_state_log(a, tag, attempt, steps, success, state, still=False):
+    rows = state["rows"]
+    first = lambda key: next((i for i, r in enumerate(rows) if r[key]), None)
+    ev = dict(unlock=first("ev_unlock"), jam=first("ev_jam"), seal_broken=first("ev_break"),
+              thread_free=first("ev_release"), lifted_off=first("success"))
+    summary = dict(steps=len(rows), max_press_mm=1000 * max((r["press"] for r in rows), default=0.0),
+                   max_squeeze_mm=1000 * max((0.5 * (r["squeeze_l"] + r["squeeze_r"]) for r in rows), default=0.0),
+                   max_rot_deg=max((r["th_u"] for r in rows), default=0.0) * 57.29578,
+                   jam_steps=sum(r["jam_now"] for r in rows), clicks=rows[-1]["clicks"] if rows else 0,
+                   events_frame=ev)
+    out = dict(kind="cropen_mech_state", family=a.family, tag=tag, seed=a.seed, ckpt=str(a.ckpt), attempt=attempt,
+               steps=steps, success=success, still=still, fps=30, step_dt=1 / 30,
+               frames="row i = video frame i = control step i + 1 (the clip then holds its last frame for 1 s)",
+               units="joints in m and rad; th_u = unwrapped shell angle (rad), th_in = engaged thread progress (rad), "
+                     "tau_shell = |shell drive torque| (N m), lifted = lift above the release height (m)",
+               source="read after CROpenEnv._get_dones of each control step, before a reset; nothing written to the sim",
+               params=state["params"], summary=summary, rows=rows)
+    a.state_log.parent.mkdir(parents=True, exist_ok=True)
+    a.state_log.write_text(json.dumps(out, separators=(",", ":")))
+    print("state log", a.state_log, json.dumps(summary), flush=True)
 
 
 def file_sha256(path):
@@ -319,6 +452,10 @@ def dress_scene(a, sim_utils):
         "HandDark": sim_utils.PreviewSurfaceCfg(diffuse_color=(0.09, 0.09, 0.10), roughness=0.35, metallic=0.4),
         "TipWhite": sim_utils.PreviewSurfaceCfg(diffuse_color=(0.90, 0.90, 0.88), roughness=0.7, metallic=0.0),
     }
+    mech = getattr(a, "mech_colors", False)
+    if mech:
+        mats.update({k: sim_utils.PreviewSurfaceCfg(diffuse_color=c, roughness=0.4, metallic=0.0)
+                     for k, c in MECH_COLORS.items()})
     for name, m in mats.items():
         m.func(f"/World/Looks/{name}", m)
     strong = UsdShade.Tokens.strongerThanDescendants
@@ -342,10 +479,32 @@ def dress_scene(a, sim_utils):
                 if c.GetName() not in cap_links:
                     bind(c.GetPath().pathString, "Amber")
                     closure_parts.setdefault("Amber", []).append(c.GetPath().pathString)
-        elif n in cap_links:
+        elif n in cap_links and not mech:
             bind(prim.GetPath().pathString, "CapWhite")
             closure_parts.setdefault("CapWhite", []).append(prim.GetPath().pathString)
+        elif n in cap_links:
+            # mechanism colours: bind each cap link's own geometry (not the nested links below it), so that a link's
+            # material does not override its child links (the earlier link-level binding is stronger than descendants)
+            for c in prim.GetChildren():
+                if c.GetName() in cap_links or not c.IsA(UsdGeom.Gprim):
+                    continue
+                m = dict(inner="MechBand", tab_l="MechTab", tab_r="MechTab").get(n, "CapWhite")
+                if n == "shell" and c.GetName().startswith("box"):           # ridges: angle about the cap axis
+                    t = UsdGeom.Xformable(c).GetLocalTransformation().ExtractTranslation()
+                    ang = math.degrees(math.atan2(t[1], t[0]))
+                    if MARK_DEG[0] - 0.5 <= ang <= MARK_DEG[1] + 0.5 and math.hypot(t[0], t[1]) > 0.02:
+                        m = "MechMark"
+                bind(c.GetPath().pathString, m)
+                closure_parts.setdefault(m, []).append(c.GetPath().pathString)
     print("closure bindings", closure_parts)
+    bound = {}
+    if mech:                                         # the materials the renderer resolves, per closure gprim
+        for prim in Usd.PrimRange(stage.GetPrimAtPath(env0 + "/Closure")):
+            if prim.IsA(UsdGeom.Gprim) and UsdGeom.Imageable(prim).ComputePurpose() != UsdGeom.Tokens.guide:
+                mat_ = UsdShade.MaterialBindingAPI(prim).ComputeBoundMaterial()[0]
+                bound[prim.GetPath().pathString.replace(env0 + "/Closure/Geometry/", "")] = \
+                    mat_.GetPath().name if mat_ else None
+        print("closure resolved materials", json.dumps(bound), flush=True)
     dome = stage.GetPrimAtPath("/World/Light")
     if dome.IsValid():
         for attr, val in (("inputs:intensity", 450.0), ("inputs:color", Gf.Vec3f(0.92, 0.95, 1.0))):
@@ -357,6 +516,13 @@ def dress_scene(a, sim_utils):
     print("dressed scene: table top z", round(float(zmin), 4), "robot links",
           [c.GetName() for c in stage.GetPrimAtPath(env0 + "/Robot").GetChildren()][:30],
           "closure links", [c.GetName() for c in stage.GetPrimAtPath(env0 + "/Closure").GetChildren()])
+    return dict(closure=closure_parts, resolved=bound or None, colors=MECH_COLORS if mech else None,
+                marker_deg=list(MARK_DEG) if mech else None)
+
+
+# --mech-colors: RGB of the squeeze tabs, the shell marker ridges and the inner cap's band below the shell; ridge range
+MECH_COLORS = {"MechTab": (1.0, 0.33, 0.0), "MechMark": (0.03, 0.2, 0.85), "MechBand": (0.0, 0.62, 0.52)}
+MARK_DEG = (75.0, 105.0)
 
 
 if __name__ == "__main__":
