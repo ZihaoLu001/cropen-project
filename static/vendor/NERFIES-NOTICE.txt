@@ -11,7 +11,7 @@ Creative Commons Attribution-ShareAlike 4.0 International License
 https://creativecommons.org/licenses/by-sa/4.0/
 
 The upstream footer asks derivative websites to link back to the original
-Nerfies page in their footer. The OaP site adapts the academic title, author,
+Nerfies page in their footer. This site adapts the academic title, author,
 resource-button and section layout for its own content.
 
 Third-party components have their own licenses, documented in

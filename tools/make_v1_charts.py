@@ -8,11 +8,16 @@ and writes
   tools/data/v1_numbers.json                        every number the page shows, with the sha256 of each source
   static/images/v1_success_e10000.svg               per-family success, one row per arm: seed dots (beeswarm),
                                                     mean + 95 % CI
-  static/images/v1_ablation_m3_e6000.svg            M3 at epoch 6000: full recipe vs each component removed
+  static/images/v1_ablation_m3_e6000.svg            M3 at epoch 6000: full recipe vs each component removed, with the
+                                                    change in mean below each removal
+  (with --html) the per-seed success table between the "v1 success table" markers of index.html
+The page calls the two physics-v1 arms "without / with posture regularization" (the N1 terms: a relaxed reset pose, a
+flexion floor, posture and action-rate costs) and the families "closure types".
 Intervals are the ones the analysis recorded: 95 % t-intervals of the mean over seeds (df = n - 1), clipped to
 [0, 1]; an arm whose seeds all have one value takes Agresti-Coull at that value over its pooled episodes. The change
 intervals are Welch, or a shifted one-sample t when one arm is constant. Nothing is recomputed except the display
-rounding (means 2 decimals in the charts; the tables keep 4 or 3).
+rounding (means 2 decimals in the charts; the table keeps 4). The pre-registered calls ("necessary") are not drawn;
+the page states them in words.
 
 Text is Noto Sans (the page's font; tools/fonts/ holds a Latin subset of the OFL font), converted to paths.
 Seeds are placed as a beeswarm in screen pixels (the chart is drawn for 768 px width): x only spreads the seeds of a
@@ -39,10 +44,8 @@ from matplotlib.transforms import blended_transform_factory  # noqa: E402
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "static" / "images"
 FAMS = ["M1", "M2", "M3", "M6"]
-ABL = [("hist1", "history $H{=}1$"), ("nounlock", "no unlock bonus"), ("nocurr", "no curriculum")]
-ARM_TITLE = {"task-only": "Task-only (no N1 terms)",
-             "N1": "With the N1 terms (reset pose, flexion floor, posture and action-rate costs)"}
-ARM_SHORT = {"task-only": "Task-only (no N1 terms)", "N1": "With the N1 terms (N1)"}
+ABL = [("hist1", "no history"), ("nounlock", "no unlock bonus"), ("nocurr", "no curriculum")]
+ARM_TITLE = {"task-only": "Without posture regularization", "N1": "With posture regularization"}
 
 for f in sorted((ROOT / "tools" / "fonts").glob("*.ttf")):
     font_manager.fontManager.addfont(str(f))
@@ -181,7 +184,7 @@ def legend(fig, x, y, color):
                                 transform=fig.transFigure))
     fig.lines.append(plt.Line2D([x2 - 0.05 / W, x2 + 0.05 / W], [y + 0.06 / H, y + 0.06 / H], color=INK, lw=2.0,
                                 transform=fig.transFigure))
-    fig.text(x2 + 0.12 / W, y, "mean over seeds (number above) and its 95 % interval", fontsize=8.5, color=INK2,
+    fig.text(x2 + 0.12 / W, y, "mean over seeds (number above) and its 95% interval", fontsize=8.5, color=INK2,
              va="bottom")
 
 
@@ -217,28 +220,20 @@ def chart_success(nums, preview):
             column(ax, x, a["per_seed"], a["mean"], a["lo"], a["hi"], BLUE)
         ax.axvline(3.71, ymin=0.02, ymax=0.9, color=RULE, lw=1.0, zorder=0)
         ax.set_xticks(xs)
-        ax.set_xticklabels(["M1", "M2", "M3", "M6", "balanced\n(mean of 4)"], linespacing=1.15, va="top")
+        ax.set_xticklabels(["M1\nplain thread", "M2\npush-and-turn", "M3\nsqueeze-and-turn", "M6\nstuck seal",
+                            "balanced\n(mean of 4)"], linespacing=1.15, va="top")
         ax.text(-0.53, 1.06, "mean", fontsize=8, color=INK2, va="bottom")
         fig.text(L / W, (top + 0.10) / H, ARM_TITLE[arm], fontsize=10, color=INK, va="bottom")
-        ax.set_ylabel("success rate (first episodes)", fontsize=8.5, color=INK2, labelpad=6)
-    fig.text(L / W, (H - 0.10) / H, "Per-family success at epoch 10,000 · physics v1 · 8 seeds per arm",
+        ax.set_ylabel("success rate", fontsize=8.5, color=INK2, labelpad=6)
+    fig.text(L / W, (H - 0.10) / H, "Success per closure type at epoch 10,000 · physics v1 · 8 seeds per variant",
              fontsize=10.5, color=INK, weight="bold", va="top")
     legend(fig, L / W, (H - title_h - legend_h + 0.08) / H, BLUE)
     return save(fig, "v1_success_e10000", preview)
 
 
-CALLS = {  # the recorded wording (README 2026-11-17 14:12:38 +0100), short form; "not called necessary" because
-    # the rule's failure to call a removal necessary does not show that it is unnecessary
-    ("task-only", "hist1"): "necessary", ("task-only", "nocurr"): "necessary",
-    ("task-only", "nounlock"): "not called\nnecessary\n(intervals\noverlap)",
-    ("N1", "nocurr"): "necessary", ("N1", "hist1"): "raised M3",
-    ("N1", "nounlock"): "no\ndifference\nresolved",
-}
-
-
 def chart_ablation(nums, preview):
     W, L, R, mid = 7.68, 0.66, 0.10, 0.22
-    title_h, legend_h, sub_h, ax_h, tick_h, rows_h = 0.36, 0.34, 0.30, 1.95, 0.50, 0.92
+    title_h, legend_h, sub_h, ax_h, tick_h, rows_h = 0.36, 0.34, 0.30, 1.95, 0.50, 0.40
     H = title_h + legend_h + sub_h + ax_h + tick_h + rows_h + 0.04
     fig = plt.figure(figsize=(W, H))
     pw = (W - L - R - mid) / 2
@@ -252,7 +247,7 @@ def chart_ablation(nums, preview):
         if p:
             ax.set_yticklabels([])
         rows_tr = blended_transform_factory(ax.transData, fig.dpi_scale_trans)   # x: data, y: inches
-        row_change, row_call = rows_h + 0.0, rows_h - 0.30
+        row_change = rows_h + 0.0
         g = nums["gd_m3_e6000"][arm]
         pr = g["primary"]
         column(ax, 0, pr["per_seed"], pr["mean"], pr["lo"], pr["hi"], BLUE, ci_dx=0.36, sw_dx=-0.08)
@@ -262,21 +257,17 @@ def chart_ablation(nums, preview):
             ch = -a["gap_pp"]
             ax.text(i + 0.08, row_change, f"{ch:+.1f} pp".replace("-", "−"), ha="center", va="top",
                     fontsize=8.5, color=INK, transform=rows_tr)
-            ax.text(i + 0.08, row_call, CALLS[(arm, ab)], ha="center", va="top", fontsize=8.5, color=INK,
-                    linespacing=1.15, transform=rows_tr)
-        # row headers in the full-recipe slot, which has no change of its own
+        # row header in the full-recipe slot, which has no change of its own
         ax.text(0.12, row_change, "change in\nmean", ha="center", va="top", fontsize=8, color=INK2,
                 style="italic", linespacing=1.1, transform=rows_tr)
-        ax.text(0.12, row_call, "result", ha="center", va="top", fontsize=8, color=INK2, style="italic",
-                linespacing=1.1, transform=rows_tr)
         ax.set_xticks([x + 0.08 for x in xs])
-        ax.set_xticklabels(["full recipe\n(8 seeds)", "history\nH = 1\n(3 seeds)", "no unlock\nbonus\n(3 seeds)",
+        ax.set_xticklabels(["full recipe\n(8 seeds)", "no history\n(H = 1)\n(3 seeds)", "no unlock\nbonus\n(3 seeds)",
                             "no\ncurriculum\n(3 seeds)"], fontsize=8.5, linespacing=1.15, va="top")
         ax.text(-0.52, 1.06, "mean", fontsize=8, color=INK2, va="bottom")
-        fig.text(x0 / W, (top + 0.10) / H, ARM_SHORT[arm], fontsize=10, color=INK, va="bottom")
+        fig.text(x0 / W, (top + 0.10) / H, ARM_TITLE[arm], fontsize=10, color=INK, va="bottom")
         if not p:
             ax.set_ylabel("M3 success rate", fontsize=8.5, color=INK2, labelpad=6)
-    fig.text(L / W, (H - 0.10) / H, "M3 at epoch 6,000 · one component removed at a time · physics v1",
+    fig.text(L / W, (H - 0.10) / H, "Squeeze-and-turn (M3) at epoch 6,000 · one component removed · physics v1",
              fontsize=10.5, color=INK, weight="bold", va="top")
     legend(fig, L / W, (H - title_h - legend_h + 0.08) / H, GRAY)
     return save(fig, "v1_ablation_m3_e6000", preview)
@@ -287,70 +278,26 @@ def num(v, d=4):
     return f"{v:.{d}f}"
 
 
-def pp(v):
-    return f"{v:+.1f}".replace("-", "−")
-
-
 def table_success(nums) -> str:
     cols = FAMS + ["balanced"]
     rows = ['<table class="table is-narrow result-table">',
-            "<caption>Success rate of each training seed's final checkpoint (epoch 10,000) on its first episodes, "
-            "physics v1. Mean ± SD over the 8 seeds and the 95 % t-interval of the mean (df 7, clipped to [0, 1]). "
-            "Balanced success is the mean over the four families. The N1 terms are a relaxed reset pose, a flexion "
-            "floor, and posture and action-rate costs.</caption>",
+            "<caption>Success rate of each seed's final checkpoint (epoch 10,000), physics v1, with the mean ± SD "
+            "over the eight seeds and the 95% t-interval of the mean. Balanced: the mean over the four types."
+            "</caption>",
             '<thead><tr><th scope="col">Seed</th>' + "".join(f'<th scope="col">{c}</th>' for c in cols)
             + "</tr></thead>", "<tbody>"]
     for arm in ("task-only", "N1"):
         d = nums["success_e10000"][arm]
-        rows.append(f'<tr class="group-row"><th scope="rowgroup" colspan="{len(cols) + 1}">{ARM_SHORT[arm]}</th></tr>')
+        rows.append(f'<tr class="group-row"><th scope="rowgroup" colspan="{len(cols) + 1}">{ARM_TITLE[arm]}</th></tr>')
         for i, s in enumerate(d["seeds"]):
             rows.append(f'<tr><th scope="row">{s}</th>'
                         + "".join(f"<td>{num(d['families'][c]['per_seed'][i])}</td>" for c in cols) + "</tr>")
         rows.append('<tr class="summary-row"><th scope="row">mean ± SD</th>'
                     + "".join(f"<td>{num(d['families'][c]['mean'])} ± {num(d['families'][c]['sd'])}</td>"
                               for c in cols) + "</tr>")
-        rows.append('<tr class="summary-row"><th scope="row">95 % interval</th>'
+        rows.append('<tr class="summary-row"><th scope="row">95% interval</th>'
                     + "".join(f"<td>{num(d['families'][c]['lo'])} to {num(d['families'][c]['hi'])}</td>"
                               for c in cols) + "</tr>")
-    rows += ["</tbody>", "</table>"]
-    return "\n".join(rows)
-
-
-def table_ablation(nums) -> str:
-    rows = ['<table class="table is-narrow result-table">',
-            "<caption>M3 success at epoch 6,000 (196,608,000 frames per run), physics v1. Per-seed rates in seed "
-            "order (full recipe: seeds 1, 2, 4, 5, 6, 7, 8, 9; each removal: seeds 1, 2, 4). The interval of a mean "
-            "is the 95 % t-interval over seeds; a run whose seeds all have the same rate uses the Agresti-Coull "
-            "interval over its pooled episodes. The change is the removal's mean minus the full recipe's, with its "
-            "95 % interval (Welch, or a one-sample t when one run is constant); the call follows the pre-registered "
-            "rule (necessary: a drop of at least 20 pp and non-overlapping 95 % intervals of the two means).</caption>",
-            '<thead><tr><th scope="col">Run</th><th scope="col">M3 per seed</th><th scope="col">mean</th>'
-            '<th scope="col">95 % interval</th><th scope="col">change</th><th scope="col">result</th></tr></thead>',
-            "<tbody>"]
-    names = {"hist1": "history H = 1", "nounlock": "no unlock bonus", "nocurr": "no curriculum"}
-    for arm in ("task-only", "N1"):
-        g = nums["gd_m3_e6000"][arm]
-        rows.append(f'<tr class="group-row"><th scope="rowgroup" colspan="6">{ARM_SHORT[arm]}</th></tr>')
-        p = g["primary"]
-        rows.append('<tr><th scope="row">full recipe</th><td class="seeds">' + ", ".join(num(v, 3) for v in p["per_seed"])
-                    + f"</td><td>{num(p['mean'], 3)}</td><td>{num(p['lo'], 3)} to {num(p['hi'], 3)}</td>"
-                      "<td></td><td></td></tr>")
-        for ab, _ in ABL:
-            a = g["ablations"][ab]
-            ch = -a["gap_pp"]
-            lo, hi = sorted((-a["diff_pp"][1], -a["diff_pp"][0]))
-            if a["necessary"]:
-                call = "necessary"
-            elif ab == "nounlock" and arm == "task-only":
-                call = "not called necessary (intervals overlap)"
-            elif a["difference_resolved"]:
-                call = "raised M3" if ch > 0 else "lowered M3, not called necessary"
-            else:
-                call = "no difference resolved"
-            rows.append(f'<tr><th scope="row">{names[ab]}</th><td class="seeds">'
-                        + ", ".join(num(v, 3) for v in a["per_seed"])
-                        + f"</td><td>{num(a['mean'], 3)}</td><td>{num(a['lo'], 3)} to {num(a['hi'], 3)}</td>"
-                        + f'<td class="wrap">{pp(ch)} pp<br>({pp(lo)} to {pp(hi)})</td><td class="wrap">{call}</td></tr>')
     rows += ["</tbody>", "</table>"]
     return "\n".join(rows)
 
@@ -370,7 +317,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", type=Path, required=True)
     ap.add_argument("--preview-dir", default=None)
-    ap.add_argument("--html", type=Path, default=None, help="write the two table views into this page")
+    ap.add_argument("--html", type=Path, default=None, help="write the per-seed success table into this page")
     a = ap.parse_args()
     found = {f.name for f in font_manager.fontManager.ttflist if f.name == "Noto Sans"}
     assert found, "Noto Sans not registered (tools/fonts/)"
@@ -382,7 +329,6 @@ def main():
     print("v1_ablation_m3_e6000.svg", chart_ablation(nums, a.preview_dir))
     if a.html:
         patch_html(a.html, "v1 success table", table_success(nums))
-        patch_html(a.html, "v1 ablation table", table_ablation(nums))
     print("ok")
 
 

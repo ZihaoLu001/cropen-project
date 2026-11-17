@@ -2,20 +2,27 @@
 
 Drawn with matplotlib: serif (STIX) text and math, converted to paths so the SVG looks the same in every browser;
 the render thumbnails in tools/fig_assets/ are embedded as JPEG (matplotlib embeds PNG; this script swaps in a
-JPEG of the same pixels to keep the files small). Every label is taken from the code of the training checkout
-(dexrl-cropen-v2/cropen: env_cropen.py, vml.py, closure_urdf.py, train_ppo.py) and the recipe's command line
-(README P1, recipe N1):
-  actor input  x_t = [q, qdot, q*, f (4 fingertips x 3), a_{t-1}] (76 numbers, the order of _frame()), stacked over
-               --obs-history 8 steps;
-  critic input s_t = [x_t, q_c, qdot_c, family one-hot, mechanism state (6), mechanism parameters (5)] (101);
-  rl_games MLPs 512-256-128 (ELU) for the actor and the separate central-value critic; the actor is Gaussian with a
-               learned, state-independent log-std (fixed_sigma=True, initial sigma 1) and acts with its mean at test;
-  PhysX at 120 Hz, decimation 4 (30 Hz control), action scale 0.08 rad; the joint PD drives run every substep;
-  VML gate: engaged while z_p > th_p (M2) or z_s > th_s (M3; z_s = mean of the two tab slides), with 0.8 mm
-               hysteresis, then for a further unlock window of 0-0.5 rad of turning (redrawn every episode);
-  reward: thread progress, release, lift, success, a one-off 2.0 when a gated cap first engages (--r-unlock 2.0),
-  jam / action / force costs; N1 adds --w-posture -0.01, --w-rate -0.001, a flexion floor and a relaxed reset pose;
-  gate curriculum: --gate-init 0.25 --gate-step 0.05 --gate-up 0.3 (over >= 200 episodes); evaluation at full gates.
+JPEG of the same pixels to keep the files small).
+
+Labels are short Title-Case nouns, as in the method figures of related papers (group titles Isaac Lab, Observation,
+Policy, Training; a legend of arrow types). Red badges 1-4 mark the CR-Open-specific parts and are cited by the
+Method paragraph of index.html: (1) Mechanism Layer, (2) Type Hidden, (3) Unlock Bonus, (4) Threshold Curriculum.
+What the boxes show follows the training code (dexrl-cropen-v2/cropen: env_cropen.py, vml.py, train_ppo.py) and
+the recipe's command line (P1A3 recipe R2: --r-unlock 2.0 --obs-history 8 --gate-curriculum --gate-init 0.25
+--gate-step 0.05 --gate-up 0.3):
+  actor input (Observation) = [joint positions, joint velocities, joint targets, 4 fingertip contact forces (3D),
+               last action] (the order of _frame()), stacked over --obs-history 8 control steps; no type, no closure
+               state;
+  critic input (Privileged State) = the current step plus closure joint states, the type (one-hot), the mechanism
+               state and the mechanism parameters (training only);
+  Mechanism Layer (vml.py) = every physics substep the env reads the closure joints, steps the layer and writes the
+               closure drive targets and effort limits (amber arrows);
+  Reward = thread progress, release, lift, success, a one-off bonus when a gated (M2/M3) cap first engages, jam /
+               action / force costs (plus the posture terms of the N1 variant; not drawn);
+  Threshold Curriculum = the M2 press and M3 squeeze thresholds start at 0.25 of their value and rise by 0.05 when
+               that type's success over >= 200 episodes exceeds 0.3; evaluation uses the full thresholds;
+  Policy = Gaussian MLP actor trained with PPO; joint targets move by 0.08 rad x a_t per 30 Hz control step.
+Rates, network sizes, dimensions and the reward terms are left to the paper.
 
 Every figure is checked before it is written: no text may cross the border of the box that holds it.
 
@@ -211,232 +218,155 @@ def jpeg_images(svg: str, quality=86) -> str:
 
 
 # ---------------------------------------------------------------------------------------------------- method
+GT, LB = 16, 14            # group titles (bold) and box labels
+BADGE = "#c8102e"          # numbered key components, cited as (1)-(4) in the page's Method paragraph
+
+
+def badge(c, x, y, n, r=10.0):
+    """red numbered badge (as in the Method paragraph of the page)"""
+    c.ax.add_patch(Circle((x, y), r, fc=BADGE, ec="white", lw=1.2, zorder=9))
+    c.text(x, y + 0.5, str(n), size=11.5, color="white", weight="bold", z=9.5, free=True)
+
+
 def method_figure(preview_dir=None):
-    W, H = 1200, 724
+    W, H = 1200, 538
     c = Canvas(W, H)
-    T = 56  # top of the group boxes (the action lane runs above them)
+    T, lane = 48, 24                      # top of the groups; the action loop runs above them
     seg_parts = [16, 16, 16, 12, 16]                                         # the order of _frame()
     seg_cols = ["#2a78d6", "#5598e7", "#86b6ef", FORCE, "#b7d3f6"]           # q, qdot, q*, f, a_{t-1}
 
-    # ---------------- group boxes (titles at the bottom centre)
-    A = (12, T, 412, 676)
-    B = (432, T, 792, 352)
-    C = (812, 182, 1188, 352)
-    D = (432, 370, 1188, 676)
+    # ---------------- groups (bold titles top left)
+    A = (12, T, 420, 490)
+    B = (440, T, 800, 272)
+    C = (820, T, 1188, 272)
+    D = (440, 290, 1188, 490)
     c.box(*A, fc=SIM[0], ec=SIM[1], lw=1.5, r=12, z=0)
     c.box(*B, fc=OBS[0], ec=OBS[1], lw=1.5, r=12, z=0)
     c.box(*C, fc=POL[0], ec=POL[1], lw=1.5, r=12, z=0)
     c.box(*D, fc=TRN[0], ec=TRN[1], lw=1.5, r=12, z=0, ls=(0, (5, 3)))
-    c.text((A[0] + A[2]) / 2, A[3] - 14, "Simulation (IsaacLab, PhysX)", size=13)
-    c.text((B[0] + B[2]) / 2, B[3] - 14, "Deployable observation", size=13)
-    c.text((C[0] + C[2]) / 2 + 40, C[3] - 14, "Policy", size=13)
-    c.text((D[0] + D[2]) / 2, D[3] - 14, "Training only: PPO with an asymmetric critic", size=13)
+    for G, s in ((A, "Isaac Lab"), (B, "Observation"), (C, "Policy"), (D, "Training")):
+        c.text(G[0] + 14, G[1] + 21, s, size=GT, ha="left", weight="bold")
 
-    # ---------------- A: close-up of the closure and its joints; render of the hand over the bottle
-    cx, cy, cw = 30, T + 54, 164
+    # ---------------- Isaac Lab: the closure, the hand, and the mechanism layer (1)
+    cx, cy, cw = 28, 96, 190
     ch = c.image(ASSETS / "cap_closeup.jpg", cx, cy, cw)
-    mid = cx + cw / 2
-    # the far rim moves to the left when the shell turns the opening way (+z, counter-clockwise from above)
-    c.ellipse_arrow(mid, cy - 2, 124, 22, 340, 200, color=ARROW, lw=1.2, head=7)
-    c.arrow([(mid, cy - 26), (mid, cy + 4)], color=ARROW, lw=1.2, head=7)
-    c.text(mid + 70, cy - 13, r"$\theta$", size=12)
-    c.text(mid + 6, cy - 26, r"$z_p$", size=12, ha="left")
-    ty_tab = cy + ch * 0.31
-    c.arrow([(cx - 14, ty_tab), (cx + 4, ty_tab)], color=ARROW, lw=1.2, head=7)
-    c.text(cx - 14, ty_tab - 12, r"$z_s$", size=12, ha="left")
-    c.text(mid, cy + ch + 15, r"closure joints  $q_c$", size=11.5)
-    c.text(mid, cy + ch + 32, r"shell $\theta$, press $z_p$, lift $h$,", size=10.5, color=INK2)
-    c.text(mid, cy + ch + 48, r"tabs $z_s$ (mean of the two)", size=10.5, color=INK2)
-    hx, hy, hw = 222, T + 14, 172
+    c.text(cx + cw / 2, cy + ch + 15, "Closure", size=LB)
+    hx, hy, hw = 240, 80, 166
     hh = c.image(ASSETS / "hand_over_bottle.jpg", hx, hy, hw)
-    c.text(hx + hw / 2, hy + hh + 14, "Allegro hand, 16 joints, palm down", size=10, color=INK2)
-
-    # ---------------- A: the virtual mechanism layer (nested); its arrows are simulator internals (amber)
-    V = (26, 336, 398, 642)
+    c.text(hx + hw / 2, hy + hh + 15, "Allegro Hand", size=LB)
+    V = (28, 342, 404, 452)
     c.box(*V, fc=VML[0], ec=VML[1], lw=1.4, r=10, z=1)
-    c.text((V[0] + V[2]) / 2, V[3] - 14, "Virtual mechanism layer, every physics substep", size=11.5)
-    xr, xw = 84, 112
-    y0, y1 = cy + ch + 60, V[1]
+    badge(c, V[0] + 22, V[1] + 24, 1)
+    c.text(V[0] + 40, V[1] + 24, "Mechanism Layer", size=15, ha="left", weight="bold")
+    c.text(V[0] + 16, V[1] + 73, r"Type $k$", size=LB, ha="left")
+    for i, (code, col) in enumerate(zip(("M1", "M2", "M3", "M6"), (ARROW, PUSH, SQUEEZE, TWIST))):
+        x0 = V[0] + 86 + i * 72
+        c.box(x0, V[1] + 60, x0 + 62, V[1] + 86, fc="white", ec=col, lw=1.5, r=6, z=2)
+        c.text(x0 + 31, V[1] + 73, code, size=13.5)
+    # every physics substep the layer reads the closure joints and sets their drive targets (amber: simulator)
+    y0, y1 = cy + ch + 26, V[1]
+    xr, xw = 92, 128
     c.arrow([(xr, y0), (xr, y1)], color=VML[1], lw=1.4)
     c.arrow([(xw, y1), (xw, y0)], color=VML[1], lw=1.4)
-    c.text(xr - 8, (y0 + y1) / 2, r"read $q_c$", size=11, ha="right")
-    c.text(xw + 8, (y0 + y1) / 2 - 8, r"write drive targets $\hat q_c$", size=11, ha="left")
-    c.text(xw + 8, (y0 + y1) / 2 + 9, r"and effort limits $\bar\tau_c$", size=11, ha="left")
-    c.eye_slash(V[0] + 22, V[1] + 22, s=0.9, color=INK)
-    c.text(V[0] + 38, V[1] + 21, r"hidden family $k\in\{\mathrm{M1,\,M2,\,M3,\,M6}\}$", size=11.5, ha="left")
-    c.text(V[0] + 38, V[1] + 41, r"parameters $\xi=(\theta_p,\theta_s,n,\tau_b,\tau_t)$, new each episode",
-           size=10.5, ha="left", color=INK2)
-    rules = [
-        ("gate", [r"engaged while $z_p>\theta_p$ (M2) or $z_s>\theta_s$ (M3),",
-                  r"with hysteresis, then for a further 0–0.5 rad"]),
-        ("jam", [r"$z_p>\theta_p$ on M1, M3 or M6 holds the shell"]),
-        ("clutch", [r"M6: held until $|\tau|\geq\tau_b$, then slips free"]),
-        ("thread", [r"friction $\tau_t$; after $n$ engaged turns the cap is free"]),
-    ]
-    y = V[1] + 80
-    for name, lines in rules:
-        c.box(V[0] + 12, y - 11, V[0] + 68, y + 11, fc="white", ec=VML[1], lw=0.9, r=5, z=2)
-        c.text(V[0] + 40, y, name, size=11, style="italic")
-        if len(lines) == 1:
-            c.text(V[0] + 78, y, lines[0], size=10.5, ha="left")
-        else:
-            c.text(V[0] + 78, y - 8, lines[0], size=10.5, ha="left")
-            c.text(V[0] + 78, y + 9, lines[1], size=10.5, ha="left")
-        y += 50 if len(lines) > 1 else 40
-    c.text(V[0] + 12, y - 6, "at run time only drive targets and effort limits change", size=10, ha="left",
-           color=INK2)
+    c.text(xr - 8, (y0 + y1) / 2, r"$q_c$", size=LB, ha="right")
+    c.text(xw + 8, (y0 + y1) / 2, "Drive Targets", size=LB, ha="left")
 
-    # ---------------- B: deployable observation
-    tx = B[0] + 12                                   # token list (left)
-    tokens = [(r"$q_t\in\mathbb{R}^{16}$", "joint positions", 0),
-              (r"$\dot q_t\in\mathbb{R}^{16}$", "joint velocities", 1),
-              (r"$q^{*}_t\in\mathbb{R}^{16}$", "joint targets", 2),
-              (r"$a_{t-1}\in\mathbb{R}^{16}$", "last action", 4)]
-    math_w = max(c.width(m, 11) for m, _, _ in tokens)
-    desc_x = tx + 20 + math_w + 8
-    ty = T + 24
-    for i, (m, s, j) in enumerate(tokens):
-        yy = ty + i * 25
-        c.feature_bar(tx, yy - 4.5, 14, 9, [1], [seg_cols[j]])
-        c.text(tx + 20, yy - 1, m, size=11, ha="left")
-        c.text(desc_x, yy, s, size=10.5, ha="left", color=INK2)
-    list_right = desc_x + max(c.width(s, 10.5) for _, s, _ in tokens)
-    # one step of 76 numbers across the box; the fingertip render sits over the force segment
-    bx0, bw, by = B[0] + 12, (B[2] - 12) - (B[0] + 12), T + 158
-    spans = c.feature_bar(bx0, by, bw, 13, seg_parts, seg_cols)
-    f_mid = sum(spans[3]) / 2
-    fw = 104
-    fx, fy = f_mid - fw / 2, T + 12
-    assert fx > list_right + 6, (fx, list_right)
+    # ---------------- Observation: five signals of one control step, stacked over 8 steps; the type is hidden (2)
+    names = ["Joint Positions", "Joint Velocities", "Joint Targets", "Fingertip Forces", "Last Action"]
+    rx = B[0] + 14
+    ys = [94 + 22 * i for i in range(5)]
+    for y, s, col in zip(ys, names, seg_cols):
+        c.feature_bar(rx, y - 4.5, 14, 9, [1], [col])
+        c.text(rx + 22, y, s, size=LB, ha="left")
+    fw = 112
+    fx, fy = B[2] - 12 - fw, 96
     fh = c.image(ASSETS / "fingertips_on_cap.jpg", fx, fy, fw)
-    c.feature_bar(f_mid - 52, fy + fh + 8.5, 12, 9, [1], [FORCE])
-    c.text(f_mid - 34, fy + fh + 12, "fingertip forces", size=11, ha="left")
-    c.text(f_mid, fy + fh + 30, r"$f_t\in\mathbb{R}^{4\times 3}$", size=11)
-    c.arrow([(f_mid, fy + fh + 41), (f_mid, by - 1)], lw=1.1, head=6.5)
-    # the list feeds q, qdot, q* and a: a bracket over the strip, open where the forces come in
-    yb = by - 7
-    c.line([(spans[0][0] + 1, yb + 4), (spans[0][0] + 1, yb), (spans[2][1] + 2, yb)], lw=1.0)
-    c.line([(spans[4][0] - 2, yb), (spans[4][1] - 1, yb), (spans[4][1] - 1, yb + 4)], lw=1.0)
-    c.line([(spans[2][1] + 2, yb), (f_mid - 9, yb)], lw=1.0)
-    c.line([(f_mid + 9, yb), (spans[4][0] - 2, yb)], lw=1.0)
-    lx = (spans[1][0] + spans[1][1]) / 2
-    c.arrow([(lx, ty + 3 * 25 + 8), (lx, yb)], lw=1.1, head=6.5)
-    c.text(bx0, by + 28, r"one step  $x_t\in\mathbb{R}^{76}$", size=11.5, ha="left")
-    # the history: 8 stacked frames
-    n, dx, dy = 8, 4.5, 3.0
-    sx0, sy0, swid, shgt = bx0, by + 46, 196, 20
+    c.box(fx, fy, fx + fw, fy + fh, fc="none", ec=FORCE, lw=1.4, r=6, z=3.6, region=False)
+    xf = rx + 22 + c.width("Fingertip Forces", LB) + 8
+    c.line([(xf, ys[3]), (fx - 2, ys[3])], color=FORCE, lw=1.1)
+    c.arrow([(hx + hw + 3, ys[1]), (rx - 4, ys[1])], lw=1.3)          # hand -> observation
+    n, dx, dy = 8, 3.5, 2.5
+    sx0, sy0, sw, sh = rx, 194, 176, 18
     for i in range(n):
-        k = n - 1 - i                         # back cards first
+        k = n - 1 - i                           # back cards first
         x, y = sx0 + k * dx, sy0 + i * dy
-        c.box(x, y, x + swid, y + shgt, fc="white", ec="#9ec5f4", lw=0.8, r=4, z=3 + i * 0.1, region=False)
-    fy0 = sy0 + (n - 1) * dy                  # the front card (x_t) is at sx0
-    c.feature_bar(sx0 + 7, fy0 + 6, swid - 14, 8, seg_parts, seg_cols, z=4.5)
-    xs_ = bx0 + c.width(r"one step  $x_t\in\mathbb{R}^{76}$", 11.5) + 30
-    c.arrow([(xs_, by + 14), (xs_, sy0 - 1)], lw=1.0, head=6)
-    c.text(xs_ + 8, (by + 14 + sy0) / 2 + 1, "stack 8 steps", size=10.5, ha="left", color=INK2)
-    ay = fy0 + shgt / 2
-    stack_right = sx0 + swid + (n - 1) * dx
-    c.text((stack_right + B[2]) / 2 - 2, ay - 14, r"$o_t=x_{t-7:t}$", size=12)
-    c.eye_slash(B[0] + 28, B[3] - 39, s=0.9, color=INK, lw=1.2)
-    c.text(B[0] + 44, B[3] - 39, r"no family, no closure state:  $k\notin o_t$", size=11.5, ha="left")
+        c.box(x, y, x + sw, y + sh, fc="white", ec="#9ec5f4", lw=0.8, r=4, z=3 + i * 0.1, region=False)
+    fy0 = sy0 + (n - 1) * dy                    # the front card is the current step
+    c.feature_bar(sx0 + 7, fy0 + 5, sw - 14, 8, seg_parts, seg_cols, z=4.5)
+    ay = fy0 + sh / 2
+    stack_right = sx0 + sw + (n - 1) * dx
+    yh = 252
+    badge(c, rx + 8, yh, 2)
+    c.eye_slash(rx + 36, yh, s=0.95, color=INK, lw=1.2)
+    c.text(rx + 54, yh, "Type Hidden", size=LB, ha="left")
 
-    # ---------------- C: actor
-    c.arrow([(stack_right + 4, ay), (C[0] + 20, ay)], lw=1.2)
-    tx0, tx1 = C[0] + 22, C[0] + 142
-    c.trapezoid(tx0, tx1, ay, 112, 56, fc=POL[1])
-    c.text((tx0 + tx1) / 2 - 4, ay - 9, "MLP", size=12, color="white")
-    c.text((tx0 + tx1) / 2 - 4, ay + 9, "512-256-128", size=10.5, color="white")
-    c.text(C[0] + 16, ay - 86, r"actor  $\pi_\psi(a_t\,|\,o_t)$", size=12.5, ha="left")
-    c.text(C[0] + 16, ay - 68, r"Gaussian, learned state-independent $\sigma$; mean at test", size=10.5, ha="left",
-           color=INK2)
-    c.arrow([(tx1, ay), (tx1 + 42, ay)], lw=1.2)
-    c.box(tx1 + 44, ay - 17, tx1 + 176, ay + 17, fc="white", ec=POL[1], lw=1.0, r=8, z=3)
-    c.text(tx1 + 110, ay, r"$a_t\in[-1,1]^{16}$", size=12)
-    lane = 30
-    c.arrow([(tx1 + 176, ay), (C[2] - 14, ay), (C[2] - 14, lane), (hx + hw / 2, lane), (hx + hw / 2, hy - 1)],
-            lw=1.3)
-    c.text((hx + hw / 2 + C[2]) / 2, lane - 14,
-           r"new joint targets  $q^{*}_{t+1}=\mathrm{clip}(q^{*}_t+0.08\,a_t)$  at 30 Hz;  PD drives at 120 Hz",
-           size=12)
-    # hand -> observation
-    c.arrow([(hx + hw, ty + 12), (tx - 3, ty + 12)], lw=1.2)
-    c.text((hx + hw + tx) / 2 - 2, ty, r"$q_t,\dot q_t,f_t$", size=11, free=True,
-           bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none"))
+    # ---------------- Policy
+    tx0, tx1 = C[0] + 32, C[0] + 152
+    c.arrow([(stack_right + 4, ay), (tx0 - 2, ay)], lw=1.3)
+    c.text((stack_right + B[2]) / 2, ay - 13, "History (8 Steps)", size=13)
+    c.text(C[0] + 16, ay - 13, r"$o_t$", size=LB + 1)
+    c.trapezoid(tx0, tx1, ay, 92, 46, fc=POL[1])
+    c.text((tx0 + tx1) / 2 - 4, ay, r"$\pi$", size=22, color="white")
+    c.arrow([(tx1, ay), (tx1 + 34, ay)], lw=1.3)
+    Pa = (tx1 + 36, ay - 17, tx1 + 106, ay + 17)
+    c.box(*Pa, fc="white", ec=POL[1], lw=1.1, r=8, z=3)
+    c.text((Pa[0] + Pa[2]) / 2, ay, r"$a_t$", size=LB + 1)
+    lx = hx + hw / 2
+    c.arrow([(Pa[2], ay), (C[2] - 20, ay), (C[2] - 20, lane), (lx, lane), (lx, hy - 1)], lw=1.3)
+    c.text((lx + C[2] - 20) / 2, lane - 12, "Joint Targets", size=LB)
 
-    # ---------------- D: training-only signals (every arrow dashed)
-    P = (D[0] + 26, D[1] + 22, D[0] + 214, D[1] + 206)
-    c.box(*P, fc="white", ec=TRN[1], lw=1.0, r=8, z=2)
-    c.text((P[0] + P[2]) / 2, P[1] + 17, r"critic input  $s_t\in\mathbb{R}^{101}$", size=11.5)
-    priv = [(r"$x_t$", "current step (76)"), (r"$q_c,\dot q_c$", "closure joints (5+5)"),
-            (r"$k$", "family one-hot (4)"), (r"$m_t$", "mechanism state (6)"), (r"$\xi$", "parameters (5)")]
-    rows = [P[1] + 44 + i * 25 for i in range(len(priv))]
-    c.box(P[0] + 5, rows[1] - 12, P[2] - 5, rows[-1] + 12, fc=VML[0], ec="none", lw=0, r=4, z=2.2, region=False)
-    for yy, (m, s) in zip(rows, priv):
-        c.text(P[0] + 12, yy, m, size=11.5, ha="left")
-        c.text(P[0] + 62, yy, s, size=10.5, ha="left", color=INK2)
-    c.text(P[0] + 12, P[3] - 13, "shaded: privileged (sim only)", size=10, ha="left", color="#8a5a10")
-    # x_t (the front card of the stack) to the critic, down the left gutter of B and D
-    gx = (A[2] + B[0]) / 2
-    c.arrow([(sx0, ay), (gx, ay), (gx, rows[0]), (P[0], rows[0])], lw=1.1, ls="--", color=TRN[1], head=6.5)
-    # q_c, k, m_t, xi from the mechanism layer
-    c.arrow([(V[2], rows[2]), (P[0], rows[2])], lw=1.1, ls="--", color=TRN[1], head=6.5)
-    cyc = (rows[0] + rows[-1]) / 2
-    c.arrow([(P[2], cyc), (P[2] + 18, cyc)], lw=1.1, color=TRN[1], head=6.5, ls="--")
-    k0, k1 = P[2] + 20, P[2] + 112
-    c.trapezoid(k0, k1, cyc, 98, 48, fc=TRN[1])
-    c.text((k0 + k1) / 2 - 3, cyc - 8, "MLP", size=11.5, color="white")
-    c.text((k0 + k1) / 2 - 3, cyc + 9, "512-256-128", size=10, color="white")
-    c.text((k0 + k1) / 2, cyc - 70, r"critic  $V_\phi(s_t)$", size=12.5)
-    Q = (k1 + 28, cyc - 21, k1 + 92, cyc + 21)
-    c.arrow([(k1, cyc), (Q[0], cyc)], lw=1.1, color=TRN[1], head=6.5, ls="--")
+    # ---------------- Training only (dashed): asymmetric critic, PPO, reward with the unlock bonus (3), curriculum (4)
+    cyc = 358
+    P = (456, 324, 634, 432)
+    c.box(*P, fc=VML[0], ec=TRN[1], lw=1.0, r=8, z=2)
+    c.text((P[0] + P[2]) / 2, P[1] + 18, "Privileged State", size=LB)
+    for i, s in enumerate(["Closure Joints", r"Type $k$", "Mechanism State", "Mechanism Parameters"]):
+        c.text(P[0] + 12, P[1] + 42 + i * 17, s, size=12, ha="left", color=INK2)
+    c.arrow([(V[2], 378), (P[0] - 1, 378)], lw=1.1, ls="--", color=TRN[1], head=6.5)
+    k0, k1 = 666, 748
+    xm = (P[2] + k0) / 2                        # the critic also sees the current observation step
+    c.line([(P[2], cyc), (xm, cyc)], color=TRN[1], lw=1.1, ls="--")
+    c.arrow([(xm, B[3]), (xm, cyc), (k0 - 1, cyc)], lw=1.1, ls="--", color=TRN[1], head=6.5)
+    c.trapezoid(k0, k1, cyc, 88, 44, fc=TRN[1])
+    c.text((k0 + k1) / 2 - 3, cyc, r"$V$", size=18, color="white")
+    c.text((k0 + k1) / 2 - 4, cyc + 54, "Critic", size=LB)
+    Q = (776, cyc - 21, 842, cyc + 21)
+    c.arrow([(k1, cyc), (Q[0] - 1, cyc)], lw=1.1, ls="--", color=TRN[1], head=6.5)
     c.box(*Q, fc="white", ec=TRN[1], lw=1.0, r=8, z=3)
-    c.text((Q[0] + Q[2]) / 2, cyc, "PPO", size=12.5)
-    qx = (Q[0] + Q[2]) / 2
-    act_x = (tx0 + tx1) / 2
-    act_bottom = ay + (112 + 56) / 4 + 2
+    c.text((Q[0] + Q[2]) / 2, cyc, "PPO", size=LB + 0.5)
+    qx, pxc = (Q[0] + Q[2]) / 2, (tx0 + tx1) / 2
     gap_y = (B[3] + D[1]) / 2
-    c.arrow([(qx, Q[1]), (qx, gap_y), (act_x, gap_y), (act_x, act_bottom)], lw=1.2, ls="--", color=TRN[1])
-    c.text(qx - 7, D[1] + 17, r"update $\psi$", size=11, ha="right")
-    crit_bottom = cyc + (98 + 48) / 4 + 1
-    yr = Q[3] + 30
-    c.arrow([(qx, Q[3]), (qx, yr), ((k0 + k1) / 2, yr), ((k0 + k1) / 2, crit_bottom)], lw=1.1, ls="--",
-            color=TRN[1], head=6.5)
-    c.text((qx + (k0 + k1) / 2) / 2, yr + 13, r"update $\phi$", size=11)
-    # reward (right column)
-    R = (Q[2] + 30, D[1] + 16, D[2] - 14, D[1] + 152)
+    c.arrow([(qx, Q[1]), (qx, gap_y), (pxc, gap_y), (pxc, ay + 36)], lw=1.2, ls="--", color=TRN[1])
+    R = (884, 324, 1172, 392)
     c.box(*R, fc="white", ec=TRN[1], lw=1.0, r=8, z=2)
-    lx = R[0] + 10
-    c.text(lx, R[1] + 18, r"reward  $r_t=r_{\mathrm{thread}}+r_{\mathrm{release}}+r_{\mathrm{lift}}+r_{\mathrm{success}}$",
-           size=11, ha="left")
-    c.text(lx + 46, R[1] + 40, r"$+\;2\cdot\mathbb{1}[\mathrm{a\ gated\ cap\ first\ engages}]$", size=11, ha="left")
-    c.text(lx + 46, R[1] + 62, r"$-\;c_{\mathrm{jam}}-c_{\mathrm{action}}-c_{\mathrm{force}}$", size=11, ha="left")
-    c.text(lx, R[1] + 89, r"N1 arm:  $-\,0.01\,c_{\mathrm{posture}}-0.001\,\|a_t-a_{t-1}\|^2$", size=11, ha="left")
-    c.text(lx, R[1] + 110, "plus a flexion floor on the joint targets", size=10.5, ha="left", color=INK2)
-    c.text(lx, R[1] + 125, "and a relaxed reset pose", size=10.5, ha="left", color=INK2)
-    c.arrow([(R[0], cyc), (Q[2], cyc)], lw=1.1, color=TRN[1], head=6.5, ls="--")
-    c.text((R[0] + Q[2]) / 2, cyc - 11, r"$r_t$", size=11.5, free=True)
-    # curriculum (right column, below the reward)
-    G = (R[0], R[3] + 12, R[2], R[3] + 104)
+    c.text(R[0] + 16, R[1] + 21, "Reward", size=LB, ha="left")
+    c.text(R[0] + 16, R[1] + 47, "+ Unlock Bonus", size=LB, ha="left")
+    badge(c, R[0] + 16 + c.width("+ Unlock Bonus", LB) + 18, R[1] + 47, 3)
+    c.arrow([(R[0], cyc), (Q[2] + 1, cyc)], lw=1.1, ls="--", color=TRN[1], head=6.5)
+    c.text((R[0] + Q[2]) / 2, cyc - 12, r"$r_t$", size=LB)
+    G = (884, 408, 1172, 474)
+    yg = (G[1] + G[3]) / 2
     c.box(*G, fc="white", ec=TRN[1], lw=1.0, r=8, z=2)
-    c.text(lx, G[1] + 18, r"gate curriculum:  $s\,\theta_p$ (M2),  $s\,\theta_s$ (M3)", size=11, ha="left")
-    c.text(lx, G[1] + 40, r"$s:0.25\rightarrow 1$, $+0.05$ once a family's success", size=11, ha="left")
-    c.text(lx, G[1] + 60, r"over $\geq 200$ episodes exceeds $0.3$", size=11, ha="left")
-    c.text(lx, G[1] + 81, "evaluation always at the full thresholds", size=10.5, ha="left", color=INK2)
-    yl = G[3] - 26
-    c.arrow([(G[0], yl), (V[2], yl)], lw=1.2, ls="--", color=TRN[1])
-    c.text((k0 + k1) / 2 + 20, yl - 11, r"thresholds $\theta_p,\theta_s$", size=11)
+    badge(c, G[0] + 22, yg, 4)
+    c.text(G[0] + 40, yg, "Threshold Curriculum", size=LB, ha="left")
+    s0 = G[2] - 70
+    steps = [(s0, yg + 14)]
+    for j in range(4):
+        steps += [(s0 + 12 * j + 12, yg + 14 - 9 * j), (s0 + 12 * j + 12, yg + 5 - 9 * j)]
+    c.line(steps, color=TRN[1], lw=1.4)
+    yt = yg + 1
+    c.arrow([(G[0], yt), (V[2] + 1, yt)], lw=1.2, ls="--", color=TRN[1])
+    c.text(Q[0] + 34, yt - 12, "Thresholds", size=13)
 
     # ---------------- legend (one row, centred)
-    ly = H - 20
-    items = [(ARROW, "-", "30 Hz control loop: the policy's inputs are only what a real hand senses"),
-             (VML[1], "-", "simulator internals, every physics substep (120 Hz)"),
-             (TRN[1], "--", "training only")]
-    widths = [44 + 8 + c.width(s, 11.5) for _, _, s in items]
-    gap = 34
+    ly = H - 22
+    items = [(ARROW, "-", "Control Loop"), (VML[1], "-", "Simulator"), (TRN[1], "--", "Training Only")]
+    widths = [44 + 8 + c.width(s, LB) for _, _, s in items]
+    gap = 44
     x = (W - sum(widths) - gap * (len(items) - 1)) / 2
     for (col, ls, s), wdt in zip(items, widths):
         c.arrow([(x, ly), (x + 40, ly)], color=col, lw=1.4, ls=ls, head=7)
-        c.text(x + 48, ly, s, size=11.5, ha="left")
+        c.text(x + 48, ly, s, size=LB, ha="left")
         x += wdt + gap
     return c.save("method", preview_dir)
 
@@ -520,70 +450,55 @@ def burst(c, x, y, r, color, z=8):
 
 
 def mechanism_figure(preview_dir=None):
-    W, H = 1200, 420
+    W, H = 1200, 304
     c = Canvas(W, H)
-    top, bot = 12, 384
-    # left: the render (identical for all four families)
+    top, bot = 10, 292
+    # left: the render (identical for all four types)
     L = (12, top, 232, bot)
     c.box(*L, fc="#f6f6f4", ec="#c9c7c0", lw=1.0, r=10, z=0)
-    c.text((L[0] + L[2]) / 2, 34, "One shape", size=14)
+    c.text((L[0] + L[2]) / 2, 34, "Same Geometry", size=15, weight="bold")
     iw = 196
-    ih = c.image(ASSETS / "cap_closeup.jpg", L[0] + 12, 54, iw)
-    c.text((L[0] + L[2]) / 2, 54 + ih + 15, "the simulated closure, rendered", size=11, color=INK2)
-    ye = 54 + ih + 47
-    c.eye_slash(L[0] + 26, ye, s=1.0, color=INK, lw=1.2)
-    c.text(L[0] + 46, ye - 9, "type hidden", size=12, ha="left")
-    c.text(L[0] + 46, ye + 9, "from the policy", size=12, ha="left")
-    lines = ["Shell, tabs and band are", "the same in every episode;", "the mechanism layer behind",
-             "the joints sets the family", "and its parameters."]
-    for i, s in enumerate(lines):
-        c.text(L[0] + 14, ye + 40 + i * 19, s, size=11, ha="left", color=INK)
-    c.text(L[0] + 14, bot - 16, "Paint as in the clips.", size=10.5, ha="left", color=INK2)
+    ih = c.image(ASSETS / "cap_closeup.jpg", L[0] + 12, 66, iw)
+    ye = 66 + ih + 42
+    tw = c.width("Type Hidden", 13.5)
+    xe = (L[0] + L[2]) / 2 - (tw + 30) / 2 + 10
+    c.eye_slash(xe, ye, s=1.0, color=INK, lw=1.2)
+    c.text(xe + 20, ye, "Type Hidden", size=13.5, ha="left")
 
-    cols = [("M1", "plain thread", [r"Turn to unscrew; pressing", r"past $\theta_p$ jams the thread."]),
-            ("M2", "push-and-turn", [r"Push past $\theta_p$ while turning;", r"the thread advances while",
-                                     r"pushed (plus a short window)."]),
-            ("M3", "squeeze-and-turn", [r"Squeeze both tabs past $\theta_s$", r"while turning; squeezed turns",
-                                        r"count (plus a short window)."]),
-            ("M6", "stuck seal", [r"Twist past the breakaway torque", r"$\tau_b$, then unscrew as M1."])]
+    cols = [("M1", "Plain Thread"), ("M2", "Push-and-Turn"), ("M3", "Squeeze-and-Turn"), ("M6", "Stuck Seal")]
     x_start, cw = 246, 236.5
-    for i, (code, name, desc) in enumerate(cols):
+    for i, (code, name) in enumerate(cols):
         x0 = x_start + i * cw
         x1 = x0 + cw - 8
         X = (x0 + x1) / 2
         c.box(x0, top, x1, bot, fc="white", ec="#c9c7c0", lw=1.0, r=10, z=0)
-        c.text(X, 34, f"{code}  {name}", size=14)
+        c.text(X, 34, f"{code}  {name}", size=15, weight="bold")
         g = closure_section(c, X, code)
         y_sh, so = g["y_sh"], g["so"]
-        # every family turns the shell (front of the shell moves right = counter-clockwise from above = opening);
-        # colour marks only the input that differs between the families
+        # every type turns the shell (front of the shell moves right = counter-clockwise from above = opening);
+        # colour marks only the input that differs between the types
         turn_col = TWIST if code == "M6" else ARROW
         c.ellipse_arrow(X, y_sh + 50, 172, 42, 163, 20, color=turn_col, lw=2.2 if code == "M6" else 1.5,
                         head=10 if code == "M6" else 8.5, z=9)
-        c.text(X - 84, y_sh + 80, "twist" if code == "M6" else "turn", size=11.5)
+        c.text(X - 84, y_sh + 80, "Twist" if code == "M6" else "Turn", size=13)
         if code == "M1":
             c.arrow([(X, 62), (X, y_sh - 3)], color=MUTED, lw=1.6, head=9, z=9)
             c.line([(X - 8, 78), (X + 8, 94)], color=JAM, lw=2.6, z=10)
             c.line([(X - 8, 94), (X + 8, 78)], color=JAM, lw=2.6, z=10)
-            c.text(X + 14, 86, r"press $\Rightarrow$ jam", size=12, ha="left")
+            c.text(X + 16, 86, "Press Jams", size=13, ha="left")
         if code == "M2":
             c.arrow([(X, 56), (X, y_sh - 3)], color=PUSH, lw=3.2, head=12, z=9)
-            c.text(X + 12, 80, r"push  $z_p>\theta_p$", size=12, ha="left")
+            c.text(X + 14, 82, "Push", size=13, ha="left")
         if code == "M3":
             yy = y_sh + 33
             c.arrow([(x0 + 10, yy), (X - so - 14, yy)], color=SQUEEZE, lw=3.0, head=11, z=9)
             c.arrow([(x1 - 10, yy), (X + so + 14, yy)], color=SQUEEZE, lw=3.0, head=11, z=9)
-            c.text(X, 84, r"squeeze both tabs  $z_s>\theta_s$", size=12)
+            c.text(X, 84, "Squeeze", size=13)
         if code == "M6":
-            c.text(X, 84, r"twist  $|\tau|\geq\tau_b$  breaks the seal", size=12)
+            c.text(X, 84, "Break Seal", size=13)
             burst(c, X + 58, g["y_band1"] - 3, 9, TWIST, z=8)
             c.line([(X + 64, g["y_band1"] + 4), (X + 80, g["y_band1"] + 18)], color=MUTED, lw=0.8, z=8)
-            c.text(x1 - 12, g["y_band1"] + 26, "seal", size=11, ha="right")
-        for j, s in enumerate(desc):
-            c.text(X, 302 + j * 21, s, size=12)
-    c.text((x_start + x_start + 4 * cw - 8) / 2, H - 19,
-           r"Redrawn every episode (full thresholds): $\theta_p$ 3–5 mm, $\theta_s$ 2–3 mm, "
-           r"$\tau_b$ 0.10–0.25 N m, 1–2 turns, unlock window 0–0.5 rad.", size=11.5, color=INK2)
+            c.text(x1 - 12, g["y_band1"] + 26, "Seal", size=12.5, ha="right")
     return c.save("mechanisms", preview_dir)
 
 

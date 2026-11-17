@@ -7,8 +7,9 @@ Commit: `657409a62d59a93163872c0e4921cf651b987810` (2022-12-17)
 Website: https://nerfies.github.io/  
 Website license: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 
-See `NERFIES-NOTICE.txt`. The OaP site adapts the title, author, resource-button
-and section layout; its content and media are its own. The original template
+See `NERFIES-NOTICE.txt`. This site adapts the title, author, resource-button
+and section layout (in the lean form used by recent ETH CVG project pages, e.g.
+Elevator-VIGS); its content and media are its own. The original template
 requests a footer link back to Nerfies.
 
 ## Bulma 0.9.1
@@ -37,8 +38,8 @@ URLs to local paths and limits downloads to the Latin subsets used by this page.
 
 ## Font Awesome Free 5.15.1
 
-Four unmodified SVG icons only: `file-pdf.svg`, `github.svg`, `youtube.svg`
-and `download.svg`. No icon JavaScript or icon font is included.  
+Two unmodified SVG icons only: `file-pdf.svg` and `github.svg`. No icon
+JavaScript or icon font is included.  
 Source: https://github.com/FortAwesome/Font-Awesome/tree/5.15.1/svgs  
 Copyright Fonticons, Inc. SVG icons: CC BY 4.0.  
 Full upstream notice: `fontawesome/LICENSE.txt`.
