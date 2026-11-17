@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="./static/vendor/bulma/bulma.min.css">
   <link rel="stylesheet" href="./static/vendor/fonts/fonts.css">
   <link rel="stylesheet" href="./static/css/index.css">
-  <script src="./static/js/index.js?v=v2" defer></script>
+  <script src="./static/js/index.js?v=v3" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -56,8 +56,8 @@
     <section class="hero teaser" aria-label="Teaser: one policy opening four closure families">
       <div class="container is-max-desktop">
         <div class="hero-body">
-          <video id="teaser-video" autoplay muted loop playsinline preload="metadata" poster="./static/videos/teaser-poster.jpg?v=v2" width="1280" height="720" aria-label="Four simulated clips: the same policy opens a plain threaded cap, a push-and-turn cap, a squeeze-and-turn cap and a stuck cap."><source src="./static/videos/teaser.mp4?v=v2" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/teaser.mp4?v=v2">Download the clip</a>.</video>
-          <p class="media-caption">One policy, four closures that look alike. Clockwise from top left: plain thread (M1), push-and-turn (M2), stuck seal (M6), squeeze-and-turn (M3). The policy is not told which one it holds.</p>
+          <video id="teaser-video" autoplay muted loop playsinline preload="metadata" poster="./static/videos/teaser-poster.jpg?v=v3" width="1280" height="720" aria-label="Four simulated close-up clips with a state display: the same policy opens a plain threaded cap, a push-and-turn cap, a squeeze-and-turn cap and a stuck cap."><source src="./static/videos/teaser.mp4?v=v3" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/teaser.mp4?v=v3">Download the clip</a>.</video>
+          <p class="media-caption">One policy, four closures that look alike. Clockwise from top left: plain thread (M1), push-and-turn (M2), stuck seal (M6), squeeze-and-turn (M3). The policy is not told which one it holds. The bar under each panel shows the simulator's reading of the one action that opens that closure (thread turns, press depth, twist torque or tab squeeze): the teal band under the cap disappears when the cap is pushed down, and the orange tabs are the ones M3 needs squeezed.</p>
           <p class="teaser-summary"><strong>CR-Open</strong> asks a dexterous hand to find out, by touch, how a child-resistant closure opens — and then to press, squeeze and turn with its fingers at the same time.</p>
         </div>
       </div>
@@ -83,9 +83,9 @@
           <option value="m3">M3 · squeeze-and-turn</option>
           <option value="m6">M6 · stuck seal</option>
         </select></div></div>
-        <video id="family-video" controls muted loop playsinline preload="metadata" poster="./static/videos/m1-poster.jpg?v=v2" width="1280" height="720" aria-label="M1 plain thread: the policy unscrews and lifts the cap."><source src="./static/videos/m1.mp4?v=v2" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/m1.mp4?v=v2">Download the clip</a>.</video>
-        <p id="family-description" class="task-description" aria-live="polite">Turn to unscrew, then lift. Pressing this cap jams its thread.</p>
-        <p class="media-caption muted">Simulation, real-time (30 Hz), physics v2 (255 PhysX position iterations for the hand and the closure), training recipe R2 (two GPUs, 2,048 environments each). All clips show one policy: seed 4 of the first three main-study seeds (stage 1) of the arm trained with the posture regularisers, final checkpoint (10,000 epochs). On 2,048 evaluation episodes it opens M1 100 %, M2 99.2 % (513/517), M3 99.8 % (518/519) and M6 100 %. The three stage-1 seeds at 10,000 epochs: seed 1 opens none of the four closures (0 % on each); seed 2 opens M1 99.6 % (482/484), M2 94.3 % (477/506) and M6 99.4 % (510/513), but M3 0 %; seed 4 as above. Seed 4 was chosen for the clips after these rates were read, because it is the only stage-1 seed that opens all four closures, so the clips show the best case, not a typical seed; five more seeds are training. Each clip is the first successful episode of a rollout with the family fixed for the recording; the policy itself never receives the family.</p>
+        <video id="family-video" controls muted loop playsinline preload="metadata" poster="./static/videos/m1-poster.jpg?v=v3" width="1280" height="720" aria-label="M1 plain thread: the policy unscrews and lifts the cap; a state display shows the mechanism."><source src="./static/videos/m1.mp4?v=v3" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/m1.mp4?v=v3">Download the clip</a>.</video>
+        <p id="family-description" class="task-description" aria-live="polite">Turn the cap to unscrew it, then lift it: the display shows shell rotation and thread progress rising together, with no press or squeeze needed (a press past the dashed line would jam this thread), until the cap comes free and lifts off.</p>
+        <p class="media-caption muted">Simulation at 30 Hz, physics v2 (255 PhysX position iterations for the hand and the closure), training recipe R2 (two GPUs, 2,048 environments each), shown in real time except a marked one-third-speed stretch around the unlock (M2, M3) or the seal break (M6). The colours are paint only (orange tabs, blue marker ridges on the shell, and a teal inner band that the shell covers when it is pushed down), and the display at the bottom is drawn from the simulator's per-step log of the same episode: press depth, tab squeeze, torque on the shell, shell rotation against thread progress, lift, and when each event happens. All clips show one policy: seed 4 of the first three main-study seeds (stage 1) of the arm trained with the posture regularisers, final checkpoint (10,000 epochs). On 2,048 evaluation episodes it opens M1 100 %, M2 99.2 % (513/517), M3 99.8 % (518/519) and M6 100 %. The three stage-1 seeds at 10,000 epochs: seed 1 opens none of the four closures (0 % on each); seed 2 opens M1 99.6 % (482/484), M2 94.3 % (477/506) and M6 99.4 % (510/513), but M3 0 %; seed 4 as above. Seed 4 was chosen for the clips after these rates were read, because it is the only stage-1 seed that opens all four closures, so the clips show the best case, not a typical seed; five more seeds are training. Each clip is the first successful episode of a rollout with the family fixed for the recording; the policy itself never receives the family.</p>
       </div>
     </section>
 

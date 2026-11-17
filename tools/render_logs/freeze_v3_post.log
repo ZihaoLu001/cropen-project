@@ -1,0 +1,16 @@
+{
+ "ok": true,
+ "problems": [],
+ "notes": [
+  "not checked (cache, git and generated asset folders): ['cropen/assets']",
+  "software line not checked (give --software or --software-json)"
+ ],
+ "commit": "9b24195fa8e4d17687566b8e0c621004769af647",
+ "manifest": "/workspace/natcheck/p1a3/manifest_final.json",
+ "manifest_sha256": "bdb7fd0f577b539dc667a5d9cd0affd0c4fc13615906158e9c75bea471e8049c",
+ "root": "/workspace/sitemedia/v2copy/dexrl-cropen-v2",
+ "files": 83,
+ "recipe": "R2",
+ "final": false
+}
+FREEZE_V2_OK

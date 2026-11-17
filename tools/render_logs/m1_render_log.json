@@ -3,14 +3,14 @@
  "ckpt": "/workspace/sitemedia/ck/cropen_ppo_e3nv2_s4/ckpt_10000.pt",
  "seed": 300,
  "eye": [
-  0.1,
-  0.52,
-  0.6
+  0.093,
+  -0.1994,
+  0.385
  ],
  "lookat": [
-  0.02,
-  -0.04,
-  0.35
+  0.0,
+  0.0,
+  0.335
  ],
  "attempts": [
   {
@@ -18,7 +18,8 @@
    "steps": 133,
    "seconds": 4.43,
    "success": true,
-   "frames": 133
+   "frames": 133,
+   "state_rows": 133
   }
  ],
  "n1": {
@@ -36,12 +37,146 @@
   "readback": 255,
   "readback_matches_cfg": true,
   "train": 255,
-  "file": "/workspace/sitemedia/final_v2/m1_physics.json",
+  "file": "/workspace/sitemedia/final_v3/m1_physics.json",
   "gpu": "NVIDIA GeForce RTX 4080"
  },
  "code_sha256": {
-  "render_demo.py": "77f823dbe9f7693c2a75c6e7dd8c107a75fa21ff963bbab8a186069ad4824292",
+  "render_demo.py": "7fb5fa034ff1c01338944f89a1c808d887facebd6e3e9cfb73a64b08780c048a",
   "physics_v2.py": "17dc0f683488de1cf5ca8e34ab01059ab342b4d2230b0fad5d164d90352a9986"
  },
- "note": "presentation media: family forced via cfg.families; first successful attempt kept; all attempts listed"
+ "note": "presentation media: family forced via cfg.families; first successful attempt kept; all attempts listed",
+ "focal": 24.0,
+ "res": [
+  1280,
+  720
+ ],
+ "mech_colors": true,
+ "bindings": {
+  "closure": {
+   "Amber": [
+    "/World/envs/env_0/Closure/Geometry/neck/cylinder",
+    "/World/envs/env_0/Closure/Geometry/neck/cylinder_1",
+    "/World/envs/env_0/Closure/Geometry/neck/cylinder_2",
+    "/World/envs/env_0/Closure/Geometry/neck/cylinder_3",
+    "/World/envs/env_0/Closure/Geometry/neck/FixedJoint"
+   ],
+   "MechBand": [
+    "/World/envs/env_0/Closure/Geometry/neck/inner/cylinder"
+   ],
+   "CapWhite": [
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/cylinder",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_1",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_2",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_3",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_4",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_8",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_9",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_10",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_11",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_12",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_13",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_14",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_15",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_16",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_17",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_18",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_19",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_20",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_21",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_22",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_23",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/cylinder_1",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_24",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_25",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_26",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_27",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_28",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_32",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_33",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_34",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_35",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_36",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_37",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_38",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_39",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_40",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_41",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_42",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_43",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_44",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_45",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_46",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_47"
+   ],
+   "MechMark": [
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_5",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_6",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_7",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_29",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_30",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/box_31"
+   ],
+   "MechTab": [
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/tab_l/box",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/tab_l/box_1",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/tab_r/box",
+    "/World/envs/env_0/Closure/Geometry/neck/inner/carrier/shell/tab_r/box_1"
+   ]
+  },
+  "resolved": {
+   "neck/inner/carrier/shell/tab_l/box": "MechTab",
+   "neck/inner/carrier/shell/tab_r/box": "MechTab",
+   "neck/inner/carrier/shell/cylinder": "CapWhite",
+   "neck/inner/carrier/shell/box": "CapWhite",
+   "neck/inner/carrier/shell/box_1": "CapWhite",
+   "neck/inner/carrier/shell/box_2": "CapWhite",
+   "neck/inner/carrier/shell/box_3": "CapWhite",
+   "neck/inner/carrier/shell/box_4": "CapWhite",
+   "neck/inner/carrier/shell/box_5": "MechMark",
+   "neck/inner/carrier/shell/box_6": "MechMark",
+   "neck/inner/carrier/shell/box_7": "MechMark",
+   "neck/inner/carrier/shell/box_8": "CapWhite",
+   "neck/inner/carrier/shell/box_9": "CapWhite",
+   "neck/inner/carrier/shell/box_10": "CapWhite",
+   "neck/inner/carrier/shell/box_11": "CapWhite",
+   "neck/inner/carrier/shell/box_12": "CapWhite",
+   "neck/inner/carrier/shell/box_13": "CapWhite",
+   "neck/inner/carrier/shell/box_14": "CapWhite",
+   "neck/inner/carrier/shell/box_15": "CapWhite",
+   "neck/inner/carrier/shell/box_16": "CapWhite",
+   "neck/inner/carrier/shell/box_17": "CapWhite",
+   "neck/inner/carrier/shell/box_18": "CapWhite",
+   "neck/inner/carrier/shell/box_19": "CapWhite",
+   "neck/inner/carrier/shell/box_20": "CapWhite",
+   "neck/inner/carrier/shell/box_21": "CapWhite",
+   "neck/inner/carrier/shell/box_22": "CapWhite",
+   "neck/inner/carrier/shell/box_23": "CapWhite",
+   "neck/inner/cylinder": "MechBand",
+   "neck/cylinder": "Amber",
+   "neck/cylinder_1": "Amber"
+  },
+  "colors": {
+   "MechTab": [
+    1.0,
+    0.33,
+    0.0
+   ],
+   "MechMark": [
+    0.03,
+    0.2,
+    0.85
+   ],
+   "MechBand": [
+    0.0,
+    0.62,
+    0.52
+   ]
+  },
+  "marker_deg": [
+   75.0,
+   105.0
+  ]
+ },
+ "state_log": "/workspace/sitemedia/final_v3/m1_state.json"
 }
