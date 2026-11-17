@@ -17,7 +17,7 @@ with a Dexterous Hand (CR-Open)**. Work in progress; all results are in simulati
 - On phones (width up to 600 px) the mechanism figure and the chart switch to 2 x 2 versions (`<picture>`;
   `mechanisms_phone.svg`, `v1_success_e10000_phone.svg`); the method figure keeps a readable width and scrolls
   sideways inside its own box (a corner chip marks it); the page itself never scrolls sideways.
-- Changed assets carry a `?v=` query (page assets `v7`, clips `v3b`).
+- Changed assets carry a `?v=` query (page assets `v7`, clips `v3c`).
 
 ## Clips (`static/videos/`)
 
@@ -30,14 +30,10 @@ episode is kept, every attempt is listed in the `*_render_log.json` files). The 
 cap are drawn by `tools/overlay_mech.py` from the per-step state log of the same episode
 (`tools/render_logs/m*_state.json`) and the render camera (`m*_render_log.json`); the mechanism colours (orange
 tabs, blue marker ridges, teal inner band) are paint only and change no physics. `tools/sheet.py` makes the contact
-sheets; `tools/render_logs/render_v3.sh` and `overlay_v3b.sh` are the runs. The page calls the stage-1 seeds "the three
+sheets; `tools/render_logs/render_v3.sh` and `overlay_v3c.sh` are the runs (v3c redraws the v3b overlay from
+the same frames and logs with plainer wording; `overlay_v3c_log.jsonl` matches `overlay_v3b_log.jsonl` in every field
+except the output name and size). The page calls the stage-1 seeds "the three
 seeds trained first" and glosses recipe R2 as "(two GPUs)".
-
-Known wording left in the burned-in state display (needs the raw frames, which are only on the render box): "closure
-family (hidden from the policy)", "gate x · off y mm", "GATE UNLOCKED AGAIN", "no function here", "thin: shell ·
-thick: thread", and a check mark on the M3 jam event. At the next overlay pass, `overlay_mech.py` should say "closure
-type (hidden from the policy)", "unlocks at x mm", "UNLOCKED AGAIN", drop the two notes, and mark only unlock, free
-and lift events with a check mark.
 
 ## Figures
 

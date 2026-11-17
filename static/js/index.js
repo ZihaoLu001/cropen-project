@@ -40,10 +40,10 @@ function show(key) {
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
   video.pause();
-  video.poster = `./static/videos/${key}-poster.jpg?v=v3b`;
+  video.poster = `./static/videos/${key}-poster.jpg?v=v3c`;
   video.setAttribute('aria-label', `${clip.name}: one policy opens the closure in simulation; a state display shows the mechanism.`);
-  video.querySelector('source').src = `./static/videos/${key}.mp4?v=v3b`;
-  video.querySelector('a').href = `./static/videos/${key}.mp4?v=v3b`;
+  video.querySelector('source').src = `./static/videos/${key}.mp4?v=v3c`;
+  video.querySelector('a').href = `./static/videos/${key}.mp4?v=v3c`;
   clipText.textContent = clip.text;
   video.load();
   if (!reduceMotion.matches) video.play().catch(() => {});

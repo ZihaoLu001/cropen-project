@@ -44,9 +44,9 @@ KEY_EVENT = {"M1": None, "M2": "unlock", "M3": "unlock", "M6": "seal_broken"}
 C = dict(press=(0, 196, 170), squeeze=(255, 120, 30), torque=(190, 130, 255), turn=(90, 160, 255),
          lift=(140, 215, 100), text=(238, 240, 244), muted=(160, 168, 180), ok=(70, 210, 130), bad=(245, 80, 80),
          warn=(255, 190, 60), panel=(14, 16, 20))
-EV = dict(unlock=("GATE UNLOCKED", C["ok"]), jam=("THREAD JAMMED", C["bad"]), seal_broken=("SEAL BROKEN", C["torque"]),
+EV = dict(unlock=("UNLOCKED", C["ok"]), jam=("THREAD JAMMED", C["bad"]), seal_broken=("SEAL BROKEN", C["torque"]),
           thread_free=("THREAD FREE", C["turn"]), lifted_off=("LIFTED OFF", C["ok"]),
-          reengage=("GATE UNLOCKED AGAIN", C["ok"]))
+          reengage=("UNLOCKED AGAIN", C["ok"]))
 EV_ORDER = ("jam", "unlock", "seal_broken", "thread_free", "lifted_off")
 GATED_EV = ("unlock", "reengage")   # banners that end when the gate locks again
 DARK = (16, 18, 22)
@@ -154,21 +154,21 @@ def status(fam, r):
     if fam == "M6" and not r["broke"]:
         return "seal holding: shell stuck", C["torque"]
     if r["jam_now"]:
-        return "jammed: must not be pressed", C["bad"]
+        return "jammed by pressing", C["bad"]
     if gated and not r["engaged"]:
         if r["ev_unlock"]:                           # the gate has opened before and locked again
-            return ("released: push again to engage" if fam == "M2" else "released: squeeze again to engage"), C["warn"]
+            return ("locked again: push down to engage" if fam == "M2" else "locked again: squeeze tabs to engage"), C["warn"]
         return ("locked: push down to engage" if fam == "M2" else "locked: squeeze tabs to engage"), C["warn"]
     return "engaged: turning unscrews", C["turn"]
 
 
 def event_text(fam, k, i, ser, p):
     if k in GATED_EV and fam == "M2":
-        return f"pushed {ser['press'][i]:.1f} mm (gate {1000 * p['th_press']:.1f} mm): turning now unscrews"
+        return f"pushed {ser['press'][i]:.1f} mm (unlocks at {1000 * p['th_press']:.1f} mm): turning now unscrews"
     if k in GATED_EV:
-        return f"tabs squeezed {ser['squeeze'][i]:.1f} mm (gate {1000 * p['th_squeeze']:.1f} mm): turning now unscrews"
+        return f"tabs squeezed {ser['squeeze'][i]:.1f} mm (unlocks at {1000 * p['th_squeeze']:.1f} mm): turning now unscrews"
     if k == "jam":
-        return f"pressed {ser['press'][i]:.1f} mm on a cap that must not be pressed"
+        return f"pressed {ser['press'][i]:.1f} mm: this cap jams when pressed"
     if k == "seal_broken":
         return f"twisted past the breakaway torque ({p['tau_break']:.2f} N m)"
     if k == "thread_free":
@@ -398,12 +398,11 @@ class FullHUD:
         hy = 1000 * p["hyst"]                           # a gate engaged above th stays engaged down to th - hyst
         self.charts = [
             dict(k="press", lab="PRESS", hi=6.0, thr=th_p, rel=th_p - hy if fam == "M2" else None,
-                 thr_lab=f"gate {th_p:.1f} · off {th_p - hy:.1f} mm" if fam == "M2" else f"jams {th_p:.1f} mm"),
+                 thr_lab=f"unlocks at {th_p:.1f} mm" if fam == "M2" else f"jams at {th_p:.1f} mm"),
             dict(k="squeeze", lab="SQUEEZE", hi=4.0, thr=th_s if fam == "M3" else None,
-                 rel=th_s - hy if fam == "M3" else None, thr_lab=f"gate {th_s:.1f} · off {th_s - hy:.1f} mm",
-                 note=None if fam == "M3" else "no function here"),
+                 rel=th_s - hy if fam == "M3" else None, thr_lab=f"unlocks at {th_s:.1f} mm"),
             dict(k="torque", lab="TORQUE", hi=tmax, thr=p["tau_break"] if fam == "M6" else None,
-                 thr_lab=f"breakaway {p['tau_break']:.2f}"),
+                 thr_lab=f"breaks at {p['tau_break']:.2f} N m"),
             dict(k="turn", lab="TURN", hi=dmax, thr=free_deg, thr_lab=f"free at {p['turns']:.2f} turns"),
             dict(k="lift", lab="LIFT", hi=lmax, thr=lift_off, thr_lab="lift-off"),
         ]
@@ -418,7 +417,7 @@ class FullHUD:
         L.rect(14, 14, 60, 60, rgba((255, 255, 255), 235), r=9)
         L.text(37, 37, self.fam, f["badge"], rgba((20, 22, 26)), anchor="mm")
         L.text(72, 13, name, f["name"], rgba(C["text"]))
-        L.text(72, 41, "closure family (hidden from the policy)", f["small"], rgba(C["muted"]))
+        L.text(72, 41, "type hidden from the policy", f["small"], rgba(C["muted"]))
         y = 70
         for line in wrap(task, f["task"], 300):
             L.text(14, y, line, f["task"], rgba(C["text"]))
@@ -487,20 +486,24 @@ class FullHUD:
             bg = mix((255, 255, 255), 22 if key else 12)
             if cs.get("thr") is not None:                # threshold label on a chip, above the traces
                 ty = yv(cs["thr"])
-                above = ty - y0 > 20
+                above = ty - y0 > 20 and k != "turn"     # TURN: below its line, the legend sits at the top
                 tw = L.tlen(cs["thr_lab"], f["small"])
                 cy0 = ty - 17 if above else ty + 3
                 L.rect(x0 + 5, cy0, x0 + 13 + tw, cy0 + 14, bg, r=3)
                 L.text(x0 + 9, cy0 + 1, cs["thr_lab"], f["small"], rgba((235, 235, 235)))
-            if k == "turn":
-                lg = "thin: shell · thick: thread"
-                tw = L.tlen(lg, f["small"])
-                L.rect(x0 + 5, y0 + 4, x0 + 13 + tw, y0 + 18, bg, r=3)
-                L.text(x0 + 9, y0 + 5, lg, f["small"], rgba(C["muted"]))
+            if k == "turn":                              # line-sample legend, same order as the value: shell / thread
+                items = (("shell", 1.5, 130), ("thread", 2.6, 255))
+                tot = sum(16 + L.tlen(nm, f["small"]) for nm, _, _ in items) + 10 * (len(items) - 1)
+                L.rect(x0 + 5, y0 + 4, x0 + 13 + tot, y0 + 18, bg, r=3)
+                lx = x0 + 9
+                for nm, wdt, alpha in items:
+                    L.line([(lx, y0 + 11), (lx + 12, y0 + 11)], mix(colr, alpha), wdt)
+                    L.text(lx + 16, y0 + 5, nm, f["small"], rgba(C["muted"]))
+                    lx += 16 + L.tlen(nm, f["small"]) + 10
         # event list under the charts
         ex = x_start
         for kk, j in done:
-            t = f"✓ {EV[kk][0].lower()} {(j + 1) / 30:.2f} s"
+            t = f"{'✕' if kk == 'jam' else '✓'} {EV[kk][0].lower()} {(j + 1) / 30:.2f} s"
             L.text(ex, BH - 9, t, f["ev"], rgba(EV[kk][1]), anchor="ld")
             ex += L.tlen(t, f["ev"]) + 18
         L.paste_on(frame, M, H - M - BH)
