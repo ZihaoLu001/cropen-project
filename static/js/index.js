@@ -1,6 +1,6 @@
 'use strict';
 
-// One player for the teaser and the four per-type clips; the clip label under the player covers all five.
+// One player for the teaser and the four per-type clips.
 const clips = {
   teaser: { name: 'All four closure types', text: 'Top: M1 plain thread, M2 push-and-turn. Bottom: M3 squeeze-and-turn, M6 stuck seal.' },
   m1: { name: 'M1 plain thread', text: 'Plain thread: the hand unscrews and lifts the cap; pressing down would jam the thread.' },

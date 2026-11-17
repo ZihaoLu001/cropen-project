@@ -18,8 +18,8 @@
   <link rel="preload" href="./static/vendor/fonts/google-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="./static/vendor/bulma/bulma.min.css">
   <link rel="stylesheet" href="./static/vendor/fonts/fonts.css">
-  <link rel="stylesheet" href="./static/css/index.css?v=v7">
-  <script src="./static/js/index.js?v=v7" defer></script>
+  <link rel="stylesheet" href="./static/css/index.css?v=v8">
+  <script src="./static/js/index.js?v=v8" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -64,31 +64,6 @@
           <button type="button" id="clip-toggle" class="clip-toggle" aria-label="Pause the clip" hidden><svg class="icon-pause" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg><svg class="icon-play" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 2.2v11.6c0 .6.7 1 1.2.6l9-5.8c.5-.3.5-.9 0-1.2l-9-5.8C4.7 1.2 4 1.6 4 2.2z"/></svg></button>
         </div>
         <p id="clip-text" class="clip-text" aria-live="polite">Top: M1 plain thread, M2 push-and-turn. Bottom: M3 squeeze-and-turn, M6 stuck seal.</p>
-        <div class="clip-label">
-          <p><strong>Selected episodes.</strong> Main study with the current simulator settings (physics v2), training recipe R2 (two GPUs) with posture regularization, seed 4 after 10,000 epochs. Each clip is the first successful episode of a recording with the closure type fixed to the one shown. Real time, except marked stretches at one-third speed.</p>
-          <p id="stage1-title" class="label-head">Success at epoch 10,000 of the three seeds trained first</p>
-          <table aria-labelledby="stage1-title">
-            <thead><tr><th scope="col">Seed</th><th scope="col">M1</th><th scope="col">M2</th><th scope="col">M3</th><th scope="col">M6</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">1</th><td>0%</td><td>0%</td><td>0%</td><td>0%</td></tr>
-              <tr><th scope="row">2</th><td>99.6%</td><td>94.3%</td><td>0%</td><td>99.4%</td></tr>
-              <tr class="shown"><th scope="row">4 (shown)</th><td>100%</td><td>99.2%</td><td>99.8%</td><td>100%</td></tr>
-            </tbody>
-          </table>
-          <p>We chose seed 4 after reading these rates because it is the only one of the three that opens all four types, so the clips show the best case, not a typical seed. Five more seeds are still training.</p>
-        </div>
-        <details class="details-block">
-          <summary>About these clips</summary>
-          <div class="content">
-            <ul>
-              <li>The policy acts at 30 Hz. The slowed stretches cover the unlock (M2, M3), the seal break (M6) and, in M3, one full two-tab squeeze.</li>
-              <li>The colors are for visualization only and do not affect the physics; the teal band disappears under the shell when the cap is pushed down.</li>
-              <li>The travel is only a few millimeters and the fingertips hide the tabs, so the state display and the markers on the cap are drawn from the simulator's log of the same episode.</li>
-              <li>In the M3 clip, a short press at the start jams the thread for two steps; in the M6 clip, the seal breaks after a third of a second.</li>
-              <li>The type codes follow a longer list of closure types; M4 and M5 are not part of this study.</li>
-            </ul>
-          </div>
-        </details>
       </div>
     </section>
 
@@ -122,35 +97,6 @@
         <div class="content has-text-justified narrow">
           <p>Every closure is the same articulated object, with joints for shell rotation, pressing, tab squeezing and lifting. At every physics step, a mechanism layer <span class="bdg">1</span> reads these joints and sets their drive targets and effort limits according to the closure type and its randomized parameters. The policy observes an eight-step history of the hand's joint positions, velocities and targets, its fingertip contact forces and its last action; the closure type is hidden <span class="bdg">2</span>. Its actions change the joint targets of the 16-DoF Allegro Hand. We train it with PPO and an asymmetric critic that also receives privileged information, including the closure type and the mechanism state. The reward adds a one-time bonus when a push or squeeze first unlocks the thread <span class="bdg">3</span>, and a threshold curriculum <span class="bdg">4</span> starts the push and squeeze thresholds at a quarter of their value and raises them step by step whenever that type succeeds often enough; evaluation uses the full thresholds.</p>
         </div>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="results-title">
-      <div class="container is-max-desktop narrow">
-        <h2 id="results-title" class="title is-3 has-text-centered">Preliminary Results</h2>
-        <div class="content has-text-justified">
-          <p>These results come from a preliminary study with earlier simulator settings (physics v1). We trained two variants, without and with posture regularization (a relaxed reset pose and small posture penalties), with eight seeds each for 10,000 epochs.</p>
-        </div>
-        <h3 class="title is-5 claim">In the preliminary study, squeeze-and-turn was the hard case</h3>
-        <figure class="page-figure chart">
-          <a href="./static/images/v1_success_e10000.svg?v=v7" target="_blank" rel="noopener" title="Open the chart at full size"><picture><source media="(max-width: 600px)" srcset="./static/images/v1_success_e10000_phone.svg?v=v7" width="420" height="440"><img src="./static/images/v1_success_e10000.svg?v=v7" alt="Success per closure type at epoch 10,000, eight seeds per variant. Plain thread, push-and-turn and stuck seal: 99 to 100% mean success without and with posture regularization; squeeze-and-turn: 56% without and 41% with it, with seeds spread from 0 to 100%." width="820" height="276" loading="lazy"></picture></a>
-          <figcaption>Each circle is one seed's final policy (epoch 10,000; eight seeds per variant); bars show the mean and its 95% interval. An episode succeeds when the cap comes off the thread and is then lifted 1 cm.</figcaption>
-        </figure>
-        <div class="content has-text-justified">
-          <p>We also removed one component at a time (three seeds each) and compared squeeze-and-turn success at epoch 6,000 with the full method at the same epoch. Without the threshold curriculum, no seed opened squeeze-and-turn in either variant, but three of these six seeds opened no other closure type either. Removing the observation history or the unlock bonus changed squeeze-and-turn success in opposite directions in the two variants.</p>
-        </div>
-        <details class="details-block">
-          <summary>Study details</summary>
-          <div class="content">
-            <ul>
-              <li>Each seed's final checkpoint is evaluated with deterministic actions on 2,048 new episodes at the full thresholds, counting each environment's first episode (about 500 per type). Intervals are 95% t-intervals of the mean over seeds.</li>
-              <li>Posture regularization: a relaxed reset pose, a limit on finger hyperextension, and small posture and action-rate penalties.</li>
-              <li>Change in mean squeeze-and-turn success at epoch 6,000, without / with posture regularization: no curriculum −47.3 / −38.8 pp, one-step observation history −47.2 / +61.2 pp, no unlock bonus −41.6 / +7.3 pp (one seed without the unlock bonus and without posture regularization opened no closure at all). With three seeds per removal, only large effects can be seen.</li>
-              <li>We replaced physics v1 because a planned check with half the time step failed for the closure events (6 of 16 cases, with a scripted hand); the success of the v1 policies passed the same check.</li>
-            </ul>
-          </div>
-        </details>
-        <p class="status-note">These results are preliminary. The main study repeats both variants and the ablations with the current settings (physics v2); training is still in progress, and its results will replace these.</p>
       </div>
     </section>
   </main>
