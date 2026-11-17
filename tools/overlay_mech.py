@@ -55,7 +55,7 @@ DARK = (16, 18, 22)
 # z = 0.30; the shell bottom (press carrier) is at 0.30 + (neck 0.030 - 0.006) + press range 0.006 + lift - press;
 # the shell is 22 mm high, radius 25 mm; tab_r points along the shell angle (joint rot), tab_l opposite; a tab's
 # centre is 28 mm from the axis at mid-height minus its squeeze travel, its outer face 3 mm further out.
-Z_CARRIER0, SHELL_H, R_TAB, TAB_HALF_R = 0.330, 0.022, 0.028, 0.003
+Z_CARRIER0, SHELL_H, R_SHELL, R_TAB, TAB_HALF_R = 0.330, 0.022, 0.025, 0.028, 0.003
 APERTURE_MM = 20.955   # render_demo.py PinholeCameraCfg horizontal aperture (square pixels)
 MARK_MIN = 0.0005      # draw a mark only above 0.5 mm of travel
 FONTS = {"regular": ["/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "C:/Windows/Fonts/DejaVuSans.ttf",
@@ -232,10 +232,13 @@ class Cam:
         z = d @ self.f
         return np.array([self.c[0] + self.fx * (d @ self.r) / z, self.c[1] - self.fx * (d @ self.u) / z])
 
-    def facing(self, p, n):
-        """cosine between the outward normal n at p and the direction to the camera"""
-        v = self.E - np.asarray(p, float)
-        return float(np.asarray(n, float) @ v / np.linalg.norm(v))
+    def hidden_by_shell(self, p, zb):
+        """True when the sight line from the camera to p passes through the shell (radius 25 mm, z from zb to
+        zb + 22 mm) before it reaches p; sampled every ~1.4 mm, the last 3 % next to p is not tested"""
+        t = np.linspace(0.0, 0.97, 160)[:, None]
+        q = self.E + (np.asarray(p, float) - self.E) * t
+        inside = (np.hypot(q[:, 0], q[:, 1]) < R_SHELL) & (q[:, 2] >= zb) & (q[:, 2] <= zb + SHELL_H)
+        return bool(inside.any())
 
     @staticmethod
     def from_log(path, out_wh):
@@ -341,7 +344,7 @@ def cap_marks(m, fam, rows, i, p, ev, cam, fnt, k=1.0, labels=True):
                 d = np.array([cam(np.array([0.0, 0.0, face[2]]))[0] - P[0], 0.0])   # tab faces the camera: sideways
                 if abs(d[0]) < 1e-6:
                     d = np.array([1.0, 0.0])
-            a = 1.0 if cam.facing(face, rad) > -0.25 else 0.5   # faint when the tab is behind the cap
+            a = 0.5 if cam.hidden_by_shell(face, zb) else 1.0   # faint when the shell hides the tab face
             mm_ = 1000 * s
             L = (22 + 15 * mm_) * k
             tip = P - d / np.linalg.norm(d) * 2 * k
