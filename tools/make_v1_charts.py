@@ -267,7 +267,7 @@ def chart_ablation(nums, preview):
         # row headers in the full-recipe slot, which has no change of its own
         ax.text(0.12, row_change, "change in\nmean", ha="center", va="top", fontsize=8, color=INK2,
                 style="italic", linespacing=1.1, transform=rows_tr)
-        ax.text(0.12, row_call, "pre-set\ncall", ha="center", va="top", fontsize=8, color=INK2, style="italic",
+        ax.text(0.12, row_call, "result", ha="center", va="top", fontsize=8, color=INK2, style="italic",
                 linespacing=1.1, transform=rows_tr)
         ax.set_xticks([x + 0.08 for x in xs])
         ax.set_xticklabels(["full recipe\n(8 seeds)", "history\nH = 1\n(3 seeds)", "no unlock\nbonus\n(3 seeds)",
@@ -325,7 +325,7 @@ def table_ablation(nums) -> str:
             "95 % interval (Welch, or a one-sample t when one run is constant); the call follows the pre-registered "
             "rule (necessary: a drop of at least 20 pp and non-overlapping 95 % intervals of the two means).</caption>",
             '<thead><tr><th scope="col">Run</th><th scope="col">M3 per seed</th><th scope="col">mean</th>'
-            '<th scope="col">95 % interval</th><th scope="col">change</th><th scope="col">call</th></tr></thead>',
+            '<th scope="col">95 % interval</th><th scope="col">change</th><th scope="col">result</th></tr></thead>',
             "<tbody>"]
     names = {"hist1": "history H = 1", "nounlock": "no unlock bonus", "nocurr": "no curriculum"}
     for arm in ("task-only", "N1"):
