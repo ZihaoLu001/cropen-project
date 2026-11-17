@@ -12,12 +12,18 @@ and section layout (in the lean form used by recent ETH CVG project pages, e.g.
 Elevator-VIGS); its content and media are its own. The original template
 requests a footer link back to Nerfies.
 
-## Bulma 0.9.1
+## Bulma 1.0.4
 
-`bulma/bulma.min.css` is copied byte-for-byte from the audited Nerfies commit.
-The embedded copyright/license banner is preserved.  
-Source: https://github.com/jgthms/bulma/tree/0.9.1  
-Copyright (c) 2020 Jeremy Thomas. MIT license: `bulma/LICENSE`.
+`bulma/bulma-no-dark-mode.min.css` is copied byte-for-byte from
+`css/versions/bulma-no-dark-mode.min.css` of the npm package `bulma@1.0.4`.
+This is Bulma's build without dark mode: the page and its figures are
+light-only, and the default build would turn the page dark under
+`prefers-color-scheme: dark`. The embedded copyright/license banner is
+preserved; `bulma/LICENSE` is the package's `LICENSE`, unmodified.  
+Source: https://registry.npmjs.org/bulma/-/bulma-1.0.4.tgz  
+npm integrity of the package: `sha512-Ffb6YGXDiZYX3cqvSbHWqQ8+LkX6tVoTcZuVB3lm93sbAVXlO0D6QlOTMnV6g18gILpAXqkG2z9hf9z4hCjz2g==`  
+SHA-256 of `bulma-no-dark-mode.min.css`: `f1c3ed78fa92a1203f5644812767f2e0ff59ffdf6e94a97011eebe8ac3ac564e`  
+Copyright (c) 2023 Jeremy Thomas. MIT license: `bulma/LICENSE`.
 
 ## Google Sans and Noto Sans
 

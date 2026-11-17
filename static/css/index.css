@@ -2,8 +2,33 @@
    Layout follows the lean Nerfies variant used by recent ETH CVG project pages: one column, centred section
    titles, a TL;DR callout under the title block, one figure and one paragraph per section and red numbered badges. */
 :root { color-scheme: light; --accent: #c8102e; --ink: #363636; --muted: #6b6b6b; --link: #1a73c9; }
+/* Bulma 1.0 settings: neutral greys (1.0's default scheme is tinted blue), Noto Sans body text in the page's ink
+   colour, bold <strong>, semibold titles, 4px corners and a blue border and glow as the keyboard-focus mark of
+   buttons */
+:root {
+  --bulma-scheme-h: 0; --bulma-scheme-s: 0%; --bulma-text-h: 0; --bulma-text-s: 0%;
+  --bulma-family-primary: 'Noto Sans', sans-serif;
+  --bulma-body-color: var(--ink);
+  --bulma-strong-weight: var(--bulma-weight-bold);
+  --bulma-radius: 4px;
+  --bulma-focus-h: 217; --bulma-focus-s: 71%; --bulma-focus-l: 53%; --bulma-focus-shadow-size: 0 0 0 .125em;
+}
+.title { --bulma-title-weight: var(--bulma-weight-semibold); }
+/* buttons: regular weight, 1em side padding (1.0 subtracts the 1px border from it), a darker border on hover and
+   press instead of a grey fill, no drop shadow (box-shadow: none rather than a zero shadow alpha, which still changes
+   how Chrome draws the text of a dark button) and the control height as a fixed height (1.0's auto height comes out
+   1/64 px short, which shifts everything below by a fraction of a pixel); the focus glow (.button:focus-visible)
+   still applies */
+.button {
+  --bulma-button-weight: var(--bulma-weight-normal);
+  --bulma-button-padding-horizontal: calc(1em + 1px);
+  --bulma-button-hover-background-l-delta: 0%; --bulma-button-hover-border-l-delta: -15%;
+  --bulma-button-active-background-l-delta: 0%; --bulma-button-active-border-l-delta: -57%;
+  height: var(--bulma-control-height);
+  box-shadow: none;
+}
 html { scroll-behavior: smooth; }
-body { font-family: 'Noto Sans', sans-serif; color: var(--ink); background: #fff; }
+body { background: #fff; }
 a { color: var(--link); }
 a:hover { color: #11579a; }
 a:focus-visible, button:focus-visible, video:focus-visible, summary:focus-visible { outline: 3px solid #1679b0; outline-offset: 3px; }
@@ -24,7 +49,7 @@ a:focus-visible, button:focus-visible, video:focus-visible, summary:focus-visibl
 
 /* title block */
 .hero-body { padding: 2rem 1.5rem 1.25rem; }
-.publication-title, .publication-authors, .clip-tabs .button { font-family: 'Google Sans', sans-serif; }
+.publication-title, .publication-authors, .button { font-family: 'Google Sans', sans-serif; }
 .publication-title { line-height: 1.15; margin-bottom: 1.25rem !important; text-wrap: balance; }
 .publication-subtitle { display: block; max-width: 46rem; margin: .6rem auto 0; font-size: 2rem; line-height: 1.25; text-wrap: balance; }
 .publication-authors { line-height: 1.6; }
@@ -46,7 +71,10 @@ a:focus-visible, button:focus-visible, video:focus-visible, summary:focus-visibl
 /* clip player (one row of closure buttons, a play/pause toggle instead of the native bar that would cover the
    state display) */
 .player-section { padding-top: .5rem; }
-.clip-tabs { margin-bottom: .4rem !important; }
+/* Bulma 1.0 spaces wrapped buttons with a gap (none in an addons group) instead of a .5rem bottom margin on each
+   button: a .5rem row gap, and the row's own .5rem goes into the group's bottom margin */
+.clip-tabs { margin-bottom: .9rem !important; }
+.clip-tabs.buttons.has-addons { row-gap: .5rem; }
 .clip-tabs .button { font-size: .95rem; color: #4a4a4a; }
 .clip-tabs .button.is-selected { background: #363636; border-color: #363636; color: #fff; }
 .video-wrap { position: relative; }
@@ -92,7 +120,8 @@ video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; backgro
   .content.has-text-justified { text-align: left !important; }
 }
 @media (max-width: 600px) {
+  .clip-tabs { margin-bottom: .4rem !important; }
   .clip-tabs.buttons.has-addons { gap: .35rem; }
-  .clip-tabs.buttons.has-addons .button { margin: 0 !important; border-radius: 290486px; font-size: .85rem; padding-left: .8em; padding-right: .8em; }
+  .clip-tabs.buttons.has-addons .button { margin: 0 !important; border-radius: var(--bulma-radius-rounded); font-size: .85rem; padding-left: .8em; padding-right: .8em; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

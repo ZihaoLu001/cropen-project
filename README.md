@@ -12,13 +12,15 @@ with a Dexterous Hand (CR-Open)**. Work in progress; all results are in simulati
   user had the clip label (seed table, "About these clips") and the preliminary-results section (physics-v1 chart,
   ablation paragraph, "Study details") removed, as none of the surveyed project pages carries such material; results
   are left to the paper (and to a later v2 results update of this page).
-- Everything is local (vendored Bulma, Google Sans and Noto Sans, two Font Awesome SVGs; no CDN, no analytics), so
-  the page loads where Google and CDN hosts are blocked. Licence notices are in `static/vendor/`; the footer keeps the
-  Nerfies credit.
+- Everything is local (vendored Bulma 1.0.4, Google Sans and Noto Sans, two Font Awesome SVGs; no CDN, no
+  analytics), so the page loads where Google and CDN hosts are blocked. Licence notices are in `static/vendor/`; the
+  footer keeps the Nerfies credit. Bulma is its build without dark mode (`bulma-no-dark-mode.min.css`), as the page
+  and its figures are light-only; `static/css/index.css` sets Bulma 1.0's CSS variables (neutral greys, Noto Sans
+  text, Google Sans buttons, 4px corners, button weight, padding and focus glow) to keep the page's look.
 - On phones (width up to 600 px) the mechanism figure switches to a 2 x 2 version (`<picture>`;
   `mechanisms_phone.svg`); the method figure keeps a readable width and scrolls
   sideways inside its own box (a corner chip marks it); the page itself never scrolls sideways.
-- Changed assets carry a `?v=` query (page assets `v8`, figures `v7`, clips `v3c`).
+- Changed assets carry a `?v=` query (stylesheet `v9`, script `v8`, Bulma `1.0.4`, figures `v7`, clips `v3c`).
 
 ## Clips (`static/videos/`)
 
