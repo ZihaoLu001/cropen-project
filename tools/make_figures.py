@@ -1,28 +1,35 @@
-"""Method overview and mechanism figures of the CR-Open project page (static/images/method.svg, mechanisms.svg).
+"""Method overview and mechanism figures of the CR-Open project page (static/images/method.svg, mechanisms.svg and
+mechanisms_phone.svg, the 2 x 2 layout served to screens up to 600 px wide).
 
-Drawn with matplotlib: serif (STIX) text and math, converted to paths so the SVG looks the same in every browser;
-the render thumbnails in tools/fig_assets/ are embedded as JPEG (matplotlib embeds PNG; this script swaps in a
-JPEG of the same pixels to keep the files small).
+Drawn with matplotlib in Noto Sans (the page's body font and the font of the result charts; tools/fonts/ holds a
+Latin subset) with STIX math for the symbols, converted to paths so the SVG looks the same in every browser; the
+render thumbnails in tools/fig_assets/ are embedded as JPEG (matplotlib embeds PNG; this script swaps in a JPEG of the
+same pixels to keep the files small).
 
 Labels are short Title-Case nouns, as in the method figures of related papers (group titles Isaac Lab, Observation,
-Policy, Training; a legend of arrow types). Red badges 1-4 mark the CR-Open-specific parts and are cited by the
-Method paragraph of index.html: (1) Mechanism Layer, (2) Type Hidden, (3) Unlock Bonus, (4) Threshold Curriculum.
+Policy, Training; a legend of arrow types). Red badges 1-4 sit immediately before the label of the CR-Open-specific
+part they mark and are cited by the Method paragraph of index.html: (1) Mechanism Layer, (2) Type Hidden,
+(3) Unlock Bonus, (4) Threshold Curriculum.
 What the boxes show follows the training code (dexrl-cropen-v2/cropen: env_cropen.py, vml.py, train_ppo.py) and
 the recipe's command line (P1A3 recipe R2: --r-unlock 2.0 --obs-history 8 --gate-curriculum --gate-init 0.25
 --gate-step 0.05 --gate-up 0.3):
   actor input (Observation) = [joint positions, joint velocities, joint targets, 4 fingertip contact forces (3D),
                last action] (the order of _frame()), stacked over --obs-history 8 control steps; no type, no closure
                state;
-  critic input (Privileged State) = the current step plus closure joint states, the type (one-hot), the mechanism
-               state and the mechanism parameters (training only);
-  Mechanism Layer (vml.py) = every physics substep the env reads the closure joints, steps the layer and writes the
-               closure drive targets and effort limits (amber arrows);
-  Reward = thread progress, release, lift, success, a one-off bonus when a gated (M2/M3) cap first engages, jam /
-               action / force costs (plus the posture terms of the N1 variant; not drawn);
+  critic input = the current step only (hist[:, 0], the "Current Step" arrow from the front card of the stack) plus
+               the Privileged State: closure joint states, the type (one-hot), the mechanism state and the mechanism
+               parameters (the figure lists Closure Joints, Type k, Mechanism State; training only);
+  Mechanism Layer (vml.py) = every physics substep the env reads the closure joints (Closure Joints), steps the layer
+               and writes the closure drive targets and effort limits (Drive Targets & Limits; amber arrows, legend
+               "Physics Step");
+  Reward = thread progress, release, lift, success, jam / action / force costs (Task Reward; plus the posture terms
+               of the N1 variant, not drawn) and a one-off bonus when a gated (M2/M3) cap first engages (Unlock Bonus);
   Threshold Curriculum = the M2 press and M3 squeeze thresholds start at 0.25 of their value and rise by 0.05 when
                that type's success over >= 200 episodes exceeds 0.3; evaluation uses the full thresholds;
   Policy = Gaussian MLP actor trained with PPO; joint targets move by 0.08 rad x a_t per 30 Hz control step.
 Rates, network sizes, dimensions and the reward terms are left to the paper.
+Mechanism figure: pressing jams every type except M2 (vml.py: jam = (fam != M2_PUSH) & press_jam & ~released), so
+the grey press arrow with a red cross ("Jams if Pressed") is drawn on M1, M3 and M6.
 
 Every figure is checked before it is written: no text may cross the border of the box that holds it.
 
@@ -41,6 +48,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from matplotlib import font_manager  # noqa: E402
 from matplotlib.patches import Circle, Ellipse, FancyBboxPatch, Polygon  # noqa: E402
 from PIL import Image  # noqa: E402
 
@@ -48,8 +56,11 @@ ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "tools" / "fig_assets"
 OUT = ROOT / "static" / "images"
 
+for _f in sorted((ROOT / "tools" / "fonts").glob("*.ttf")):
+    font_manager.fontManager.addfont(str(_f))
+
 plt.rcParams.update({
-    "font.family": "STIXGeneral", "mathtext.fontset": "stix", "svg.fonttype": "path", "svg.hashsalt": "cropen",
+    "font.family": "Noto Sans", "mathtext.fontset": "stix", "svg.fonttype": "path", "svg.hashsalt": "cropen",
     "axes.linewidth": 0, "savefig.facecolor": "white", "figure.dpi": 100,
 })
 
@@ -63,6 +74,7 @@ POL = ("#eef8f0", "#2f8f46")
 TRN = ("#f3f5f8", "#5b6b7f")           # slate: training only
 # family inputs, as in the clip overlay (validated: dataviz validate_palette.js, all pairs, light)
 PUSH, SQUEEZE, TWIST, JAM = "#00a38d", "#eb6834", "#8b55e8", "#d03b3b"
+PUSH_D, SQUEEZE_D, TWIST_D = "#00796a", "#b8471a", "#6a35c9"   # darker shades for text on white
 FORCE = "#c4407e"                      # fingertip-force segment of the observation (not the orange tab paint)
 DASH = (0, (4, 3))
 
@@ -193,7 +205,7 @@ class Canvas:
         if bad:
             raise SystemExit(f"{name}: text crosses a box border:\n  " + "\n  ".join(bad))
 
-    def save(self, stem, preview_dir):
+    def save(self, stem, preview_dir, page_width=940):
         self.check(stem)
         svg = io.BytesIO()
         self.fig.savefig(svg, format="svg", metadata={"Date": None, "Creator": None})
@@ -201,7 +213,7 @@ class Canvas:
         (OUT / f"{stem}.svg").write_text(text, encoding="utf-8", newline="\n")
         if preview_dir:
             self.fig.savefig(Path(preview_dir) / f"{stem}.png", dpi=200)
-            self.fig.savefig(Path(preview_dir) / f"{stem}_page.png", dpi=int(100 * 940 / self.w))
+            self.fig.savefig(Path(preview_dir) / f"{stem}_page.png", dpi=int(round(100 * page_width / self.w)))
         plt.close(self.fig)
         return len(text)
 
@@ -217,6 +229,11 @@ def jpeg_images(svg: str, quality=86) -> str:
     return re.sub(r"data:image/png;base64,([A-Za-z0-9+/=\s]+)", lambda m: swap(m), svg)
 
 
+def _aspect(path) -> float:
+    w, h = Image.open(path).size
+    return w / h
+
+
 # ---------------------------------------------------------------------------------------------------- method
 GT, LB = 16, 14            # group titles (bold) and box labels
 BADGE = "#c8102e"          # numbered key components, cited as (1)-(4) in the page's Method paragraph
@@ -229,17 +246,17 @@ def badge(c, x, y, n, r=10.0):
 
 
 def method_figure(preview_dir=None):
-    W, H = 1200, 538
+    W, H = 1200, 512
     c = Canvas(W, H)
     T, lane = 48, 24                      # top of the groups; the action loop runs above them
     seg_parts = [16, 16, 16, 12, 16]                                         # the order of _frame()
     seg_cols = ["#2a78d6", "#5598e7", "#86b6ef", FORCE, "#b7d3f6"]           # q, qdot, q*, f, a_{t-1}
 
     # ---------------- groups (bold titles top left)
-    A = (12, T, 420, 490)
-    B = (440, T, 800, 272)
-    C = (820, T, 1188, 272)
-    D = (440, 290, 1188, 490)
+    A = (12, T, 420, 464)
+    B = (440, T, 800, 246)
+    C = (820, T, 1188, 246)
+    D = (440, 264, 1188, 464)
     c.box(*A, fc=SIM[0], ec=SIM[1], lw=1.5, r=12, z=0)
     c.box(*B, fc=OBS[0], ec=OBS[1], lw=1.5, r=12, z=0)
     c.box(*C, fc=POL[0], ec=POL[1], lw=1.5, r=12, z=0)
@@ -248,13 +265,18 @@ def method_figure(preview_dir=None):
         c.text(G[0] + 14, G[1] + 21, s, size=GT, ha="left", weight="bold")
 
     # ---------------- Isaac Lab: the closure, the hand, and the mechanism layer (1)
-    cx, cy, cw = 28, 96, 190
-    ch = c.image(ASSETS / "cap_closeup.jpg", cx, cy, cw)
-    c.text(cx + cw / 2, cy + ch + 15, "Closure", size=LB)
-    hx, hy, hw = 240, 80, 166
-    hh = c.image(ASSETS / "hand_over_bottle.jpg", hx, hy, hw)
-    c.text(hx + hw / 2, hy + hh + 15, "Allegro Hand", size=LB)
-    V = (28, 342, 404, 452)
+    ih, gap_i = 110, 14                   # both renders at one height, centred in the group
+    ar_c = _aspect(ASSETS / "cap_closeup.jpg")
+    ar_h = _aspect(ASSETS / "hand_on_cap.jpg")
+    cw, hw = ih * ar_c, ih * ar_h
+    cx = (A[0] + A[2]) / 2 - (cw + gap_i + hw) / 2
+    cy = hy = 84
+    c.image(ASSETS / "cap_closeup.jpg", cx, cy, cw, h=ih)
+    c.text(cx + cw / 2, cy + ih + 15, "Closure", size=LB)
+    hx = cx + cw + gap_i
+    c.image(ASSETS / "hand_on_cap.jpg", hx, hy, hw, h=ih)
+    c.text(hx + hw / 2, hy + ih + 15, "Allegro Hand", size=LB)
+    V = (28, 316, 404, 426)
     c.box(*V, fc=VML[0], ec=VML[1], lw=1.4, r=10, z=1)
     badge(c, V[0] + 22, V[1] + 24, 1)
     c.text(V[0] + 40, V[1] + 24, "Mechanism Layer", size=15, ha="left", weight="bold")
@@ -263,47 +285,44 @@ def method_figure(preview_dir=None):
         x0 = V[0] + 86 + i * 72
         c.box(x0, V[1] + 60, x0 + 62, V[1] + 86, fc="white", ec=col, lw=1.5, r=6, z=2)
         c.text(x0 + 31, V[1] + 73, code, size=13.5)
-    # every physics substep the layer reads the closure joints and sets their drive targets (amber: simulator)
-    y0, y1 = cy + ch + 26, V[1]
-    xr, xw = 92, 128
+    # every physics substep the layer reads the closure joints and sets their drive targets and effort limits
+    y0, y1 = cy + ih + 30, V[1]
+    xr = A[0] + 3 + c.width("Closure Joints", LB) + 10
+    xw = xr + 36
     c.arrow([(xr, y0), (xr, y1)], color=VML[1], lw=1.4)
     c.arrow([(xw, y1), (xw, y0)], color=VML[1], lw=1.4)
-    c.text(xr - 8, (y0 + y1) / 2, r"$q_c$", size=LB, ha="right")
-    c.text(xw + 8, (y0 + y1) / 2, "Drive Targets", size=LB, ha="left")
+    c.text(xr - 8, (y0 + y1) / 2, "Closure Joints", size=LB, ha="right")
+    c.text(xw + 8, (y0 + y1) / 2, "Drive Targets & Limits", size=LB, ha="left")
 
     # ---------------- Observation: five signals of one control step, stacked over 8 steps; the type is hidden (2)
     names = ["Joint Positions", "Joint Velocities", "Joint Targets", "Fingertip Forces", "Last Action"]
     rx = B[0] + 14
-    ys = [94 + 22 * i for i in range(5)]
+    ys = [96 + 22 * i for i in range(5)]
     for y, s, col in zip(ys, names, seg_cols):
         c.feature_bar(rx, y - 4.5, 14, 9, [1], [col])
         c.text(rx + 22, y, s, size=LB, ha="left")
-    fw = 112
-    fx, fy = B[2] - 12 - fw, 96
-    fh = c.image(ASSETS / "fingertips_on_cap.jpg", fx, fy, fw)
-    c.box(fx, fy, fx + fw, fy + fh, fc="none", ec=FORCE, lw=1.4, r=6, z=3.6, region=False)
-    xf = rx + 22 + c.width("Fingertip Forces", LB) + 8
-    c.line([(xf, ys[3]), (fx - 2, ys[3])], color=FORCE, lw=1.1)
     c.arrow([(hx + hw + 3, ys[1]), (rx - 4, ys[1])], lw=1.3)          # hand -> observation
     n, dx, dy = 8, 3.5, 2.5
-    sx0, sy0, sw, sh = rx, 194, 176, 18
+    sw, sh = 136, 18
+    ay = 150                                    # centre of the front card = the policy's input row
+    stack_right = B[2] - 14
+    sx0 = stack_right - sw - (n - 1) * dx
+    sy0 = ay - sh / 2 - (n - 1) * dy
     for i in range(n):
         k = n - 1 - i                           # back cards first
         x, y = sx0 + k * dx, sy0 + i * dy
         c.box(x, y, x + sw, y + sh, fc="white", ec="#9ec5f4", lw=0.8, r=4, z=3 + i * 0.1, region=False)
     fy0 = sy0 + (n - 1) * dy                    # the front card is the current step
     c.feature_bar(sx0 + 7, fy0 + 5, sw - 14, 8, seg_parts, seg_cols, z=4.5)
-    ay = fy0 + sh / 2
-    stack_right = sx0 + sw + (n - 1) * dx
-    yh = 252
+    c.text((sx0 + stack_right) / 2, sy0 - 15, "History (8 Steps)", size=13)
+    yh = 222
     badge(c, rx + 8, yh, 2)
     c.eye_slash(rx + 36, yh, s=0.95, color=INK, lw=1.2)
     c.text(rx + 54, yh, "Type Hidden", size=LB, ha="left")
 
-    # ---------------- Policy
+    # ---------------- Policy (pi at the vertical centre of its group)
     tx0, tx1 = C[0] + 32, C[0] + 152
     c.arrow([(stack_right + 4, ay), (tx0 - 2, ay)], lw=1.3)
-    c.text((stack_right + B[2]) / 2, ay - 13, "History (8 Steps)", size=13)
     c.text(C[0] + 16, ay - 13, r"$o_t$", size=LB + 1)
     c.trapezoid(tx0, tx1, ay, 92, 46, fc=POL[1])
     c.text((tx0 + tx1) / 2 - 4, ay, r"$\pi$", size=22, color="white")
@@ -316,17 +335,20 @@ def method_figure(preview_dir=None):
     c.text((lx + C[2] - 20) / 2, lane - 12, "Joint Targets", size=LB)
 
     # ---------------- Training only (dashed): asymmetric critic, PPO, reward with the unlock bonus (3), curriculum (4)
-    cyc = 358
-    P = (456, 324, 634, 432)
+    cyc = 340
+    P = (456, 300, 634, 410)
     c.box(*P, fc=VML[0], ec=TRN[1], lw=1.0, r=8, z=2)
-    c.text((P[0] + P[2]) / 2, P[1] + 18, "Privileged State", size=LB)
-    for i, s in enumerate(["Closure Joints", r"Type $k$", "Mechanism State", "Mechanism Parameters"]):
-        c.text(P[0] + 12, P[1] + 42 + i * 17, s, size=12, ha="left", color=INK2)
-    c.arrow([(V[2], 378), (P[0] - 1, 378)], lw=1.1, ls="--", color=TRN[1], head=6.5)
+    c.text((P[0] + P[2]) / 2, P[1] + 19, "Privileged State", size=LB, weight="bold")
+    for i, s in enumerate(["Closure Joints", r"Type $k$", "Mechanism State"]):
+        c.text(P[0] + 14, P[1] + 45 + i * 23, s, size=LB, ha="left")
+    c.arrow([(V[2], 352), (P[0] - 1, 352)], lw=1.1, ls="--", color=TRN[1], head=6.5)
     k0, k1 = 666, 748
-    xm = (P[2] + k0) / 2                        # the critic also sees the current observation step
-    c.line([(P[2], cyc), (xm, cyc)], color=TRN[1], lw=1.1, ls="--")
-    c.arrow([(xm, B[3]), (xm, cyc), (k0 - 1, cyc)], lw=1.1, ls="--", color=TRN[1], head=6.5)
+    c.arrow([(P[2], cyc), (k0 - 1, cyc)], lw=1.1, ls="--", color=TRN[1], head=6.5)
+    # the critic also gets the current observation step (not the stack): a dashed arrow from the front card
+    xs = k0 + 12                                # inside both the front card and the critic's top edge
+    top_v = cyc - (88 - 44 * (xs - k0) / (k1 - k0)) / 2
+    c.arrow([(xs, fy0 + sh), (xs, top_v - 1)], lw=1.1, ls="--", color=TRN[1], head=6.5)
+    c.text(xs + 8, (fy0 + sh + B[3]) / 2 + 4, "Current Step", size=13, ha="left")
     c.trapezoid(k0, k1, cyc, 88, 44, fc=TRN[1])
     c.text((k0 + k1) / 2 - 3, cyc, r"$V$", size=18, color="white")
     c.text((k0 + k1) / 2 - 4, cyc + 54, "Critic", size=LB)
@@ -337,22 +359,22 @@ def method_figure(preview_dir=None):
     qx, pxc = (Q[0] + Q[2]) / 2, (tx0 + tx1) / 2
     gap_y = (B[3] + D[1]) / 2
     c.arrow([(qx, Q[1]), (qx, gap_y), (pxc, gap_y), (pxc, ay + 36)], lw=1.2, ls="--", color=TRN[1])
-    R = (884, 324, 1172, 392)
+    R = (884, 300, 1172, 368)
     c.box(*R, fc="white", ec=TRN[1], lw=1.0, r=8, z=2)
-    c.text(R[0] + 16, R[1] + 21, "Reward", size=LB, ha="left")
-    c.text(R[0] + 16, R[1] + 47, "+ Unlock Bonus", size=LB, ha="left")
-    badge(c, R[0] + 16 + c.width("+ Unlock Bonus", LB) + 18, R[1] + 47, 3)
+    c.text(R[0] + 40, R[1] + 21, "Task Reward", size=LB, ha="left")
+    badge(c, R[0] + 22, R[1] + 47, 3)
+    c.text(R[0] + 40, R[1] + 47, "Unlock Bonus", size=LB, ha="left")
     c.arrow([(R[0], cyc), (Q[2] + 1, cyc)], lw=1.1, ls="--", color=TRN[1], head=6.5)
     c.text((R[0] + Q[2]) / 2, cyc - 12, r"$r_t$", size=LB)
-    G = (884, 408, 1172, 474)
+    G = (884, 384, 1172, 450)
     yg = (G[1] + G[3]) / 2
     c.box(*G, fc="white", ec=TRN[1], lw=1.0, r=8, z=2)
     badge(c, G[0] + 22, yg, 4)
     c.text(G[0] + 40, yg, "Threshold Curriculum", size=LB, ha="left")
-    s0 = G[2] - 70
-    steps = [(s0, yg + 14)]
-    for j in range(4):
-        steps += [(s0 + 12 * j + 12, yg + 14 - 9 * j), (s0 + 12 * j + 12, yg + 5 - 9 * j)]
+    s0 = G[2] - 14 - 30                         # small staircase icon right of the label
+    steps = [(s0, yg + 12)]
+    for j in range(3):
+        steps += [(s0 + 10 * j + 10, yg + 12 - 8 * j), (s0 + 10 * j + 10, yg + 4 - 8 * j)]
     c.line(steps, color=TRN[1], lw=1.4)
     yt = yg + 1
     c.arrow([(G[0], yt), (V[2] + 1, yt)], lw=1.2, ls="--", color=TRN[1])
@@ -360,7 +382,7 @@ def method_figure(preview_dir=None):
 
     # ---------------- legend (one row, centred)
     ly = H - 22
-    items = [(ARROW, "-", "Control Loop"), (VML[1], "-", "Simulator"), (TRN[1], "--", "Training Only")]
+    items = [(ARROW, "-", "Control Loop"), (VML[1], "-", "Physics Step"), (TRN[1], "--", "Training Only")]
     widths = [44 + 8 + c.width(s, LB) for _, _, s in items]
     gap = 44
     x = (W - sum(widths) - gap * (len(items) - 1)) / 2
@@ -380,14 +402,14 @@ BOTTLE = ("#f2bd6b", "#b8741a")
 PART = "#55534d"
 
 
-def closure_section(c, X, fam):
-    """section view of the closure (not to scale): outer shell with tabs, inner threaded cap with the teal band,
-    bottle neck and shoulder; the inside differs by family (coupling keys, press spring and gate teeth, tab pawls,
-    seal)"""
-    y_sh, so, sw, sh, st = 122, 64, 8, 72, 9           # shell: top y, outer half width, wall, height, top
+def closure_section(c, X, fam, oy=0.0):
+    """section view of the closure (not to scale), its top at oy + 122: outer shell with tabs, inner threaded cap with
+    the teal band, bottle neck and shoulder; the inside differs by type (coupling keys, press spring and gate teeth,
+    tab pawls, seal)"""
+    y_sh, so, sw, sh, st = oy + 122, 64, 8, 72, 9      # shell: top y, outer half width, wall, height, top
     y_in, io, iw = y_sh + st + 13, 53, 8                # inner cap: top y, outer half width, wall
     y_band0, y_band1 = y_sh + sh, y_sh + sh + 13        # teal band below the shell
-    no, y_neck1, bo, y_cut = 39, 230, 66, 270           # neck half width and bottom, shoulder half width, cut
+    no, y_neck1, bo, y_cut = 39, oy + 230, 66, oy + 270  # neck half width and bottom, shoulder half width, cut
     # bottle (neck + shoulder), cut at the bottom
     body = [(X - no, y_in + iw), (X + no, y_in + iw), (X + no, y_neck1), (X + bo, y_neck1 + 16), (X + bo, y_cut),
             (X - bo, y_cut), (X - bo, y_neck1 + 16), (X - no, y_neck1)]
@@ -449,6 +471,48 @@ def burst(c, x, y, r, color, z=8):
                            zorder=z))
 
 
+MECH_TYPES = [("M1", "Plain Thread"), ("M2", "Push-and-Turn"), ("M3", "Squeeze-and-Turn"), ("M6", "Stuck Seal")]
+
+
+def mech_panel(c, x0, x1, top, bot, code, name, fs_title=14, fs=13):
+    """one closure type: title, section view and the inputs that open it. Every type turns the shell (the front of
+    the shell moves right = counter-clockwise from above = opening); colour marks only the input that differs.
+    Pressing jams every type except M2: a grey press arrow with a red cross and the grey words "Jams if Pressed" on
+    M1, M3 and M6, one row above the opening input, which is written in its own colour."""
+    X = (x0 + x1) / 2
+    oy = top - 10
+    c.box(x0, top, x1, bot, fc="white", ec="#c9c7c0", lw=1.0, r=10, z=0)
+    c.text(X, oy + 34, f"{code} {name}", size=fs_title, weight="bold")
+    g = closure_section(c, X, code, oy)
+    y_sh, so = g["y_sh"], g["so"]
+    turn_col = TWIST if code == "M6" else ARROW
+    c.ellipse_arrow(X, y_sh + 50, 172, 42, 163, 20, color=turn_col, lw=2.2 if code == "M6" else 1.5,
+                    head=10 if code == "M6" else 8.5, z=9)
+    c.text(X - 84 - (fs - 13) * 1.6, y_sh + 80 + (fs - 13) * 0.6, "Twist" if code == "M6" else "Turn", size=fs,
+           color=TWIST_D if code == "M6" else INK)
+    # two rows above the cap: the jam (grey arrow, red cross, grey words) and the opening input (in its colour)
+    y_jam, y_act = oy + 72, oy + 100
+    xj = X - 46
+    if code in ("M1", "M3", "M6"):
+        c.arrow([(xj, oy + 52), (xj, y_sh - 3)], color=MUTED, lw=1.6, head=9, z=9)
+        c.line([(xj - 7, y_jam - 7), (xj + 7, y_jam + 7)], color=JAM, lw=2.6, z=10)
+        c.line([(xj - 7, y_jam + 7), (xj + 7, y_jam - 7)], color=JAM, lw=2.6, z=10)
+        c.text(xj + 16, y_jam, "Jams if Pressed", size=fs, ha="left", color=INK2)
+    if code == "M2":
+        c.arrow([(X, oy + 52), (X, y_sh - 3)], color=PUSH, lw=3.2, head=12, z=9)
+        c.text(X + 14, y_act, "Push", size=fs, ha="left", color=PUSH_D, weight="bold")
+    if code == "M3":
+        yy = y_sh + 33
+        c.arrow([(x0 + 10, yy), (X - so - 14, yy)], color=SQUEEZE, lw=3.0, head=11, z=9)
+        c.arrow([(x1 - 10, yy), (X + so + 14, yy)], color=SQUEEZE, lw=3.0, head=11, z=9)
+        c.text(xj + 16, y_act, "Squeeze", size=fs, ha="left", color=SQUEEZE_D, weight="bold")
+    if code == "M6":
+        c.text(xj + 16, y_act, "Break Seal", size=fs, ha="left", color=TWIST_D, weight="bold")
+        burst(c, X + 58, g["y_band1"] - 3, 9, TWIST, z=8)
+        c.line([(X + 63, g["y_band1"] + 4), (X + 72, g["y_band1"] + 15)], color=MUTED, lw=0.8, z=8)
+        c.text(X + 70, g["y_band1"] + 26 + (fs - 13) * 0.4, "Seal", size=fs - 0.5, ha="left")
+
+
 def mechanism_figure(preview_dir=None):
     W, H = 1200, 304
     c = Canvas(W, H)
@@ -456,7 +520,7 @@ def mechanism_figure(preview_dir=None):
     # left: the render (identical for all four types)
     L = (12, top, 232, bot)
     c.box(*L, fc="#f6f6f4", ec="#c9c7c0", lw=1.0, r=10, z=0)
-    c.text((L[0] + L[2]) / 2, 34, "Same Geometry", size=15, weight="bold")
+    c.text((L[0] + L[2]) / 2, 34, "Same Geometry", size=14, weight="bold")
     iw = 196
     ih = c.image(ASSETS / "cap_closeup.jpg", L[0] + 12, 66, iw)
     ye = 66 + ih + 42
@@ -464,42 +528,34 @@ def mechanism_figure(preview_dir=None):
     xe = (L[0] + L[2]) / 2 - (tw + 30) / 2 + 10
     c.eye_slash(xe, ye, s=1.0, color=INK, lw=1.2)
     c.text(xe + 20, ye, "Type Hidden", size=13.5, ha="left")
-
-    cols = [("M1", "Plain Thread"), ("M2", "Push-and-Turn"), ("M3", "Squeeze-and-Turn"), ("M6", "Stuck Seal")]
     x_start, cw = 246, 236.5
-    for i, (code, name) in enumerate(cols):
+    for i, (code, name) in enumerate(MECH_TYPES):
         x0 = x_start + i * cw
-        x1 = x0 + cw - 8
-        X = (x0 + x1) / 2
-        c.box(x0, top, x1, bot, fc="white", ec="#c9c7c0", lw=1.0, r=10, z=0)
-        c.text(X, 34, f"{code}  {name}", size=15, weight="bold")
-        g = closure_section(c, X, code)
-        y_sh, so = g["y_sh"], g["so"]
-        # every type turns the shell (front of the shell moves right = counter-clockwise from above = opening);
-        # colour marks only the input that differs between the types
-        turn_col = TWIST if code == "M6" else ARROW
-        c.ellipse_arrow(X, y_sh + 50, 172, 42, 163, 20, color=turn_col, lw=2.2 if code == "M6" else 1.5,
-                        head=10 if code == "M6" else 8.5, z=9)
-        c.text(X - 84, y_sh + 80, "Twist" if code == "M6" else "Turn", size=13)
-        if code == "M1":
-            c.arrow([(X, 62), (X, y_sh - 3)], color=MUTED, lw=1.6, head=9, z=9)
-            c.line([(X - 8, 78), (X + 8, 94)], color=JAM, lw=2.6, z=10)
-            c.line([(X - 8, 94), (X + 8, 78)], color=JAM, lw=2.6, z=10)
-            c.text(X + 16, 86, "Press Jams", size=13, ha="left")
-        if code == "M2":
-            c.arrow([(X, 56), (X, y_sh - 3)], color=PUSH, lw=3.2, head=12, z=9)
-            c.text(X + 14, 82, "Push", size=13, ha="left")
-        if code == "M3":
-            yy = y_sh + 33
-            c.arrow([(x0 + 10, yy), (X - so - 14, yy)], color=SQUEEZE, lw=3.0, head=11, z=9)
-            c.arrow([(x1 - 10, yy), (X + so + 14, yy)], color=SQUEEZE, lw=3.0, head=11, z=9)
-            c.text(X, 84, "Squeeze", size=13)
-        if code == "M6":
-            c.text(X, 84, "Break Seal", size=13)
-            burst(c, X + 58, g["y_band1"] - 3, 9, TWIST, z=8)
-            c.line([(X + 64, g["y_band1"] + 4), (X + 80, g["y_band1"] + 18)], color=MUTED, lw=0.8, z=8)
-            c.text(x1 - 12, g["y_band1"] + 26, "Seal", size=12.5, ha="right")
+        mech_panel(c, x0, x0 + cw - 8, top, bot, code, name)
     return c.save("mechanisms", preview_dir)
+
+
+def mechanism_figure_phone(preview_dir=None):
+    """the same content for screens up to 600 px: the render as a strip on top, the four types in a 2 x 2 grid;
+    drawn 640 px wide with labels of 17 px or more, so they stay at least 9 px on a 343 px phone column"""
+    W, H = 640, 790
+    c = Canvas(W, H)
+    S = (10, 10, 630, 180)
+    c.box(*S, fc="#f6f6f4", ec="#c9c7c0", lw=1.0, r=10, z=0)
+    ih = 140
+    iw = ih * _aspect(ASSETS / "cap_closeup.jpg")
+    c.image(ASSETS / "cap_closeup.jpg", S[0] + 16, S[1] + 15, iw, h=ih)
+    tx = S[0] + 16 + iw + 30
+    c.text(tx, 72, "Same Geometry", size=19, ha="left", weight="bold")
+    c.eye_slash(tx + 10, 122, s=1.15, color=INK, lw=1.3)
+    c.text(tx + 30, 122, "Type Hidden", size=17.5, ha="left")
+    pw, gap = 305, 10
+    for i, (code, name) in enumerate(MECH_TYPES):
+        r, k = divmod(i, 2)
+        x0 = 10 + k * (pw + gap)
+        top = 190 + r * 300
+        mech_panel(c, x0, x0 + pw, top, top + 290, code, name, fs_title=18.5, fs=17)
+    return c.save("mechanisms_phone", preview_dir, page_width=343)
 
 
 def main():
@@ -508,6 +564,7 @@ def main():
     a = p.parse_args()
     print("method.svg", method_figure(a.preview_dir), "bytes")
     print("mechanisms.svg", mechanism_figure(a.preview_dir), "bytes")
+    print("mechanisms_phone.svg", mechanism_figure_phone(a.preview_dir), "bytes")
 
 
 if __name__ == "__main__":

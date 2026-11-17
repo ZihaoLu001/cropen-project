@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="We train a dexterous hand in simulation to open four look-alike child-resistant closures without telling it which type it is holding. Work in progress.">
+  <meta name="description" content="We train a simulated dexterous hand to open four look-alike caps without telling it their type. Work in progress.">
   <meta name="theme-color" content="#ffffff">
   <meta name="author" content="Zihao Lu">
   <meta property="og:type" content="website">
@@ -18,8 +18,8 @@
   <link rel="preload" href="./static/vendor/fonts/google-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="./static/vendor/bulma/bulma.min.css">
   <link rel="stylesheet" href="./static/vendor/fonts/fonts.css">
-  <link rel="stylesheet" href="./static/css/index.css?v=v6">
-  <script src="./static/js/index.js?v=v6" defer></script>
+  <link rel="stylesheet" href="./static/css/index.css?v=v7">
+  <script src="./static/js/index.js?v=v7" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -43,27 +43,30 @@
             <button class="button is-normal is-rounded is-pending" disabled title="The preprint link will be added after publication."><span class="icon"><img src="./static/vendor/fontawesome/file-pdf.svg" alt="" width="15" height="20"></span><span>Paper (coming soon)</span></button>
             <button class="button is-normal is-rounded is-pending" disabled title="The code will be released with the preprint."><span class="icon"><img src="./static/vendor/fontawesome/github.svg" alt="" width="19" height="20"></span><span>Code (coming soon)</span></button>
           </div>
+          <div class="content tldr-wrap">
+            <p class="tldr"><strong>TL;DR:</strong> We train a simulated dexterous hand to open four look-alike caps without telling it their type.</p>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="section player-section" aria-label="Simulation clips">
       <div class="container is-max-desktop">
-        <div class="clip-bar">
-          <label for="clip-select">Closure:</label>
-          <div class="select"><select id="clip-select" autocomplete="off">
-            <option value="teaser" selected>All four</option>
-            <option value="m1">Plain Thread (M1)</option>
-            <option value="m2">Push-and-Turn (M2)</option>
-            <option value="m3">Squeeze-and-Turn (M3)</option>
-            <option value="m6">Stuck Seal (M6)</option>
-          </select></div>
+        <div class="buttons has-addons is-centered clip-tabs" role="group" aria-label="Closure type shown in the clip">
+          <button type="button" class="button is-selected" data-key="teaser" aria-pressed="true">All Four</button>
+          <button type="button" class="button" data-key="m1" aria-pressed="false">M1 Plain Thread</button>
+          <button type="button" class="button" data-key="m2" aria-pressed="false">M2 Push-and-Turn</button>
+          <button type="button" class="button" data-key="m3" aria-pressed="false">M3 Squeeze-and-Turn</button>
+          <button type="button" class="button" data-key="m6" aria-pressed="false">M6 Stuck Seal</button>
         </div>
-        <video id="clip-video" autoplay muted loop playsinline controls preload="metadata" poster="./static/videos/teaser-poster.jpg?v=v3b" width="1280" height="720" aria-label="All four closure types: one policy opens each closure in simulation; a state display shows the mechanism."><source src="./static/videos/teaser.mp4?v=v3b" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/teaser.mp4?v=v3b">Download the clip</a>.</video>
-        <p id="clip-text" class="clip-text" aria-live="polite">One policy, four look-alike closures. Clockwise from top left: plain thread, push-and-turn, stuck seal and squeeze-and-turn. The policy is not told which one it is holding.</p>
+        <div class="video-wrap">
+          <video id="clip-video" autoplay muted loop playsinline preload="metadata" poster="./static/videos/teaser-poster.jpg?v=v3b" width="1280" height="720" aria-label="All four closure types: one policy opens each closure in simulation; a state display shows the mechanism."><source src="./static/videos/teaser.mp4?v=v3b" type="video/mp4">Your browser does not support embedded video. <a href="./static/videos/teaser.mp4?v=v3b">Download the clip</a>.</video>
+          <button type="button" id="clip-toggle" class="clip-toggle" aria-label="Pause the clip" hidden><svg class="icon-pause" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg><svg class="icon-play" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 2.2v11.6c0 .6.7 1 1.2.6l9-5.8c.5-.3.5-.9 0-1.2l-9-5.8C4.7 1.2 4 1.6 4 2.2z"/></svg></button>
+        </div>
+        <p id="clip-text" class="clip-text" aria-live="polite">Top: M1 plain thread, M2 push-and-turn. Bottom: M3 squeeze-and-turn, M6 stuck seal.</p>
         <div class="clip-label">
-          <p><strong>Selected episodes.</strong> Physics v2 · recipe R2 with posture regularization · seed 4 at epoch 10,000 · each clip is the first successful episode of a rollout recorded with the type fixed (the policy never observes the type) · real time except marked stretches at one-third speed.</p>
-          <p id="stage1-title" class="label-head">Success of the three stage-1 seeds (the first three seeds of the main study) at epoch 10,000</p>
+          <p><strong>Selected episodes.</strong> Main study with the current simulator settings (physics v2), training recipe R2 (two GPUs) with posture regularization, seed 4 after 10,000 epochs. Each clip is the first successful episode of a recording with the closure type fixed to the one shown. Real time, except marked stretches at one-third speed.</p>
+          <p id="stage1-title" class="label-head">Success at epoch 10,000 of the three seeds trained first</p>
           <table aria-labelledby="stage1-title">
             <thead><tr><th scope="col">Seed</th><th scope="col">M1</th><th scope="col">M2</th><th scope="col">M3</th><th scope="col">M6</th></tr></thead>
             <tbody>
@@ -72,24 +75,20 @@
               <tr class="shown"><th scope="row">4 (shown)</th><td>100%</td><td>99.2%</td><td>99.8%</td><td>100%</td></tr>
             </tbody>
           </table>
-          <p>Seed 4 was selected after these rates were read, as the only stage-1 seed that opens all four types, so the clips show the best case, not a typical seed. Five more seeds are training.</p>
+          <p>We chose seed 4 after reading these rates because it is the only one of the three that opens all four types, so the clips show the best case, not a typical seed. Five more seeds are still training.</p>
         </div>
         <details class="details-block">
           <summary>About these clips</summary>
           <div class="content">
             <ul>
-              <li>Physics v2 runs the hand and the closure with 255 solver iterations; recipe R2 trains on two GPUs with 2,048 environments each.</li>
-              <li>Control runs at 30 Hz. The slowed stretches cover the unlock (M2, M3), the seal break (M6) and, in M3, one full two-tab squeeze.</li>
-              <li>The colors are for visualization only (orange tabs, blue marker ridges, and a teal inner band that the shell covers when it is pushed down); they do not change the physics.</li>
-              <li>The state display and the marks on the cap come from the simulator's per-step log of the same episode, projected through the render camera, because the travel is only a few millimeters and the fingertips cover the tabs.</li>
+              <li>The policy acts at 30 Hz. The slowed stretches cover the unlock (M2, M3), the seal break (M6) and, in M3, one full two-tab squeeze.</li>
+              <li>The colors are for visualization only and do not affect the physics; the teal band disappears under the shell when the cap is pushed down.</li>
+              <li>The travel is only a few millimeters and the fingertips hide the tabs, so the state display and the markers on the cap are drawn from the simulator's log of the same episode.</li>
               <li>In the M3 clip, a short press at the start jams the thread for two steps; in the M6 clip, the seal breaks after a third of a second.</li>
-              <li>Episode counts on 2,048 evaluation episodes: seed 4 opens M2 in 513 of 517 and M3 in 518 of 519; seed 2 opens M1 in 482 of 484, M2 in 477 of 506 and M6 in 510 of 513.</li>
+              <li>The type codes follow a longer list of closure types; M4 and M5 are not part of this study.</li>
             </ul>
           </div>
         </details>
-        <div class="content tldr-wrap">
-          <p class="tldr"><strong>TL;DR:</strong> We train a dexterous hand in simulation to open four look-alike child-resistant closures (plain thread, push-and-turn, squeeze-and-turn and stuck seal) without telling it which type it is holding.</p>
-        </div>
       </div>
     </section>
 
@@ -97,19 +96,19 @@
       <div class="container is-max-desktop narrow">
         <h2 id="abstract-title" class="title is-3 has-text-centered">Abstract</h2>
         <div class="content has-text-justified">
-          <p>Child-resistant closures look like ordinary screw caps, yet each opens only with its own action: pushing down while turning, squeezing two side tabs while turning, or breaking a stuck seal before unscrewing. We ask whether a dexterous hand can learn to open such closures without being told which type it is holding. We introduce CR-Open, a simulated task in which an Allegro Hand must open four closure types with identical geometry: a plain thread, push-and-turn, squeeze-and-turn and a stuck seal. We model the mechanisms in Isaac Lab as a lightweight layer on standard joints. A single PPO policy observes only proprioception and fingertip contact forces, while an asymmetric critic also receives the closure type during training; training adds a one-time unlock bonus and a threshold curriculum. In a first study under earlier physics settings, every training seed opened the plain-thread, push-and-turn and stuck-seal closures in at least 94% of episodes, while squeeze-and-turn success varied widely across seeds. This is work in progress; all results are in simulation.</p>
+          <p>Child-resistant closures look like ordinary screw caps, yet each opens only with its own action, such as pushing down or squeezing two side tabs while turning. We ask whether a dexterous hand can learn to open such closures without being told which type it is holding. We introduce CR-Open, a simulated task in which an Allegro Hand must open four closure types with identical geometry: plain thread, push-and-turn, squeeze-and-turn and stuck seal. We implement the mechanisms in Isaac Lab as a lightweight layer that drives standard articulation joints. A single policy, trained with PPO, observes only proprioception and fingertip contact forces; an asymmetric critic additionally receives the closure type as privileged information. Training uses a one-time unlock bonus and a threshold curriculum. In a preliminary study with earlier simulator settings, every seed opened the plain-thread, push-and-turn and stuck-seal closures in at least 94% of episodes, while squeeze-and-turn success varied widely across seeds.</p>
         </div>
       </div>
     </section>
 
     <section class="section" aria-labelledby="task-title">
       <div class="container is-max-desktop">
-        <h2 id="task-title" class="title is-3 has-text-centered">Four Closures, One Shape</h2>
+        <h2 id="task-title" class="title is-3 has-text-centered">Four Closure Types</h2>
         <figure class="page-figure">
-          <div class="fig-frame"><div class="fig-scroll"><a href="./static/images/mechanisms.svg?v=v6" target="_blank" rel="noopener" title="Open the figure at full size"><img src="./static/images/mechanisms.svg?v=v6" alt="Left: a render of the simulated closure, the same for every type; the type is hidden from the policy. Right: section views of the four types: plain thread (turn; pressing jams), push-and-turn, squeeze-and-turn, and stuck seal (twist breaks the seal)." width="1200" height="304" loading="lazy"></a></div></div>
+          <a href="./static/images/mechanisms.svg?v=v7" target="_blank" rel="noopener" title="Open the figure at full size"><picture><source media="(max-width: 600px)" srcset="./static/images/mechanisms_phone.svg?v=v7" width="640" height="790"><img src="./static/images/mechanisms.svg?v=v7" alt="Left: a render of the simulated closure, the same for every type; the type is hidden from the policy. Right: cross-sections of the four types: plain thread, push-and-turn, squeeze-and-turn and stuck seal (a twist breaks the seal). Pressing jams every type except push-and-turn." width="1200" height="304" loading="lazy"></picture></a>
         </figure>
         <div class="content has-text-justified narrow">
-          <p>All four closure types share the same shell, side tabs and band; only the mechanism differs, and the policy is not told which one it holds. Pressing a cap that is not push-to-open jams its thread, so the hand cannot simply push, squeeze and turn at once. The section views (not to scale) show how a real closure would implement each rule.</p>
+          <p>All four closure types share the same shell, side tabs and band; only the hidden mechanism differs. Pressing down jams every closure except push-and-turn, so the hand cannot simply push, squeeze and turn at once. The cross-sections (not to scale) sketch how a real closure would implement each mechanism.</p>
         </div>
       </div>
     </section>
@@ -118,10 +117,10 @@
       <div class="container is-max-desktop">
         <h2 id="method-title" class="title is-3 has-text-centered">Method</h2>
         <figure class="page-figure">
-          <div class="fig-frame"><div class="fig-scroll"><a href="./static/images/method.svg?v=v6" target="_blank" rel="noopener" title="Open the figure at full size"><img src="./static/images/method.svg?v=v6" alt="Isaac Lab: closure, Allegro Hand and a mechanism layer that sets the closure's drive targets. Observation: joint states and targets, fingertip forces and last action over eight steps; type hidden. Training: privileged critic, PPO, reward with unlock bonus, threshold curriculum." width="1200" height="538" loading="lazy"></a></div></div>
+          <div class="fig-frame"><div class="fig-scroll"><a href="./static/images/method.svg?v=v7" target="_blank" rel="noopener" title="Open the figure at full size"><img src="./static/images/method.svg?v=v7" alt="Isaac Lab: closure, Allegro Hand and a mechanism layer that reads the closure joints and sets their drive targets and effort limits. Observation: joint states and targets, fingertip forces and last action over eight steps; type hidden. Training: a critic that gets the current step and the privileged state, PPO, task reward with unlock bonus, threshold curriculum." width="1200" height="512" loading="lazy"></a></div><span class="swipe-chip" aria-hidden="true"><svg viewBox="0 0 24 12" width="24" height="12"><path d="M1 6h22M5 2 1 6l4 4M19 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
         </figure>
         <div class="content has-text-justified narrow">
-          <p>CR-Open models every closure with the same standard joints: shell rotation, press, tab squeeze and lift. A mechanism layer <span class="bdg">1</span> reads these joints at every physics step and sets their drive targets and effort limits according to the episode's closure type and randomized parameters: it engages the thread while the cap is pushed or squeezed past a threshold, jams it when a cap that is not push-to-open is pressed, and holds a sealed cap until a breakaway torque is reached. The policy sees only the hand's joint positions, velocities and targets, its fingertip contact forces and its last action over the last eight control steps; the closure type is hidden <span class="bdg">2</span>. It outputs changes to the joint targets of the 16-joint Allegro Hand. During training, PPO uses a critic that also sees the type and the mechanism state, a one-time bonus when a push or squeeze first unlocks the thread <span class="bdg">3</span>, and a threshold curriculum <span class="bdg">4</span> that raises the push and squeeze thresholds as each type's success grows.</p>
+          <p>Every closure is the same articulated object, with joints for shell rotation, pressing, tab squeezing and lifting. At every physics step, a mechanism layer <span class="bdg">1</span> reads these joints and sets their drive targets and effort limits according to the closure type and its randomized parameters. The policy observes an eight-step history of the hand's joint positions, velocities and targets, its fingertip contact forces and its last action; the closure type is hidden <span class="bdg">2</span>. Its actions change the joint targets of the 16-DoF Allegro Hand. We train it with PPO and an asymmetric critic that also receives privileged information, including the closure type and the mechanism state. The reward adds a one-time bonus when a push or squeeze first unlocks the thread <span class="bdg">3</span>, and a threshold curriculum <span class="bdg">4</span> starts the push and squeeze thresholds at a quarter of their value and raises them step by step whenever that type succeeds often enough; evaluation uses the full thresholds.</p>
         </div>
       </div>
     </section>
@@ -130,61 +129,28 @@
       <div class="container is-max-desktop narrow">
         <h2 id="results-title" class="title is-3 has-text-centered">Preliminary Results</h2>
         <div class="content has-text-justified">
-          <p>From a first study under earlier physics settings (physics v1): two variants, without and with posture regularization, each trained with eight seeds for 10,000 epochs.</p>
+          <p>These results come from a preliminary study with earlier simulator settings (physics v1). We trained two variants, without and with posture regularization (a relaxed reset pose and small posture penalties), with eight seeds each for 10,000 epochs.</p>
         </div>
-        <h3 class="title is-5 claim">Squeeze-and-turn is the hard case</h3>
+        <h3 class="title is-5 claim">In physics v1, squeeze-and-turn was the hard case</h3>
         <figure class="page-figure chart">
-          <div class="fig-frame"><div class="fig-scroll"><a href="./static/images/v1_success_e10000.svg?v=v6" target="_blank" rel="noopener" title="Open the chart at full size"><img src="./static/images/v1_success_e10000.svg?v=v6" alt="Dot plots of success per closure type at epoch 10,000, eight seeds per variant. Plain thread, push-and-turn and stuck seal are near 1 for every seed; squeeze-and-turn means are 0.56 without and 0.41 with posture regularization." width="768" height="564" loading="lazy"></a></div></div>
-          <figcaption>Success of each seed's final policy (circles) on 2,048 evaluation episodes, with the mean over eight seeds and its 95% interval. Every seed opens at least 94% of the plain-thread, push-and-turn and stuck-seal closures; squeeze-and-turn success varies widely across seeds.</figcaption>
+          <a href="./static/images/v1_success_e10000.svg?v=v7" target="_blank" rel="noopener" title="Open the chart at full size"><picture><source media="(max-width: 600px)" srcset="./static/images/v1_success_e10000_phone.svg?v=v7" width="420" height="440"><img src="./static/images/v1_success_e10000.svg?v=v7" alt="Success per closure type at epoch 10,000, eight seeds per variant. Plain thread, push-and-turn and stuck seal: 99 to 100% mean success without and with posture regularization; squeeze-and-turn: 56% without and 41% with it, with seeds spread from 0 to 100%." width="820" height="276" loading="lazy"></picture></a>
+          <figcaption>Each circle is one seed's final policy (epoch 10,000; eight seeds per variant); bars show the mean and its 95% interval. An episode succeeds when the cap comes off the thread and is then lifted 1 cm.</figcaption>
         </figure>
-        <h3 class="title is-5 claim">The threshold curriculum is necessary for squeeze-and-turn</h3>
-        <figure class="page-figure chart">
-          <div class="fig-frame"><div class="fig-scroll"><a href="./static/images/v1_ablation_m3_e6000.svg?v=v6" target="_blank" rel="noopener" title="Open the chart at full size"><img src="./static/images/v1_ablation_m3_e6000.svg?v=v6" alt="Squeeze-and-turn success at epoch 6,000 with one component removed. Without the curriculum, success is 0 in both variants (−47.3 and −38.8 pp). Without history: −47.2 and +61.2 pp; without the unlock bonus: −41.6 and +7.3 pp." width="768" height="389" loading="lazy"></a></div></div>
-          <figcaption>Squeeze-and-turn success at epoch 6,000 with one component removed (three seeds each) against the full recipe (eight seeds); below each column, the change in mean in percentage points (pp). Only removing the curriculum lowers success in both variants.</figcaption>
-        </figure>
+        <div class="content has-text-justified">
+          <p>We also removed one component at a time (three seeds each) and compared squeeze-and-turn success at epoch 6,000 with the full method at the same epoch. Without the threshold curriculum, no seed opened squeeze-and-turn in either variant, but three of these six seeds opened no other closure type either. Removing the observation history or the unlock bonus changed squeeze-and-turn success in opposite directions in the two variants.</p>
+        </div>
         <details class="details-block">
-          <summary>Study details and per-seed numbers</summary>
+          <summary>Study details</summary>
           <div class="content">
             <ul>
-              <li>Success means the cap is released and lifted by 1 cm. Each seed's final checkpoint is evaluated deterministically on 2,048 fresh episodes at the full thresholds, counting each environment's first episode (about 500 per type).</li>
-              <li>Posture regularization adds a relaxed reset pose, a limit on finger hyperextension, and small posture and action-rate penalties; their effect on the motion has not been measured yet.</li>
-              <li>Intervals are 95% t-intervals of the mean over seeds. Under the rule fixed before these runs were read, a removal is necessary if it lowers the mean by at least 20 pp and the two intervals do not overlap. This holds for the curriculum in both variants and for the history without posture regularization. Removing the unlock bonus lowers squeeze-and-turn success by 41.6 pp without posture regularization, but the intervals overlap.</li>
+              <li>Each seed's final checkpoint is evaluated with deterministic actions on 2,048 new episodes at the full thresholds, counting each environment's first episode (about 500 per type). Intervals are 95% t-intervals of the mean over seeds.</li>
+              <li>Posture regularization: a relaxed reset pose, a limit on finger hyperextension, and small posture and action-rate penalties.</li>
+              <li>Change in mean squeeze-and-turn success at epoch 6,000, without / with posture regularization: no curriculum −47.3 / −38.8 pp, one-step observation history −47.2 / +61.2 pp, no unlock bonus −41.6 / +7.3 pp (one seed without the unlock bonus and without posture regularization opened no closure at all). With three seeds per removal, only large effects can be seen.</li>
+              <li>We replaced physics v1 because a planned check with half the time step failed for the closure events (6 of 16 cases, with a scripted hand); the success of the v1 policies passed the same check.</li>
             </ul>
-            <div class="table-scroll">
-<!-- BEGIN v1 success table (tools/make_v1_charts.py) -->
-<table class="table is-narrow result-table">
-<caption>Success rate of each seed's final checkpoint (epoch 10,000), physics v1, with the mean ± SD over the eight seeds and the 95% t-interval of the mean. Balanced: the mean over the four types.</caption>
-<thead><tr><th scope="col">Seed</th><th scope="col">M1</th><th scope="col">M2</th><th scope="col">M3</th><th scope="col">M6</th><th scope="col">balanced</th></tr></thead>
-<tbody>
-<tr class="group-row"><th scope="rowgroup" colspan="6">Without posture regularization</th></tr>
-<tr><th scope="row">1</th><td>1.0000</td><td>0.9921</td><td>0.9847</td><td>1.0000</td><td>0.9942</td></tr>
-<tr><th scope="row">2</th><td>1.0000</td><td>0.9940</td><td>0.9719</td><td>1.0000</td><td>0.9915</td></tr>
-<tr><th scope="row">4</th><td>0.9982</td><td>0.9726</td><td>0.1635</td><td>1.0000</td><td>0.7836</td></tr>
-<tr><th scope="row">5</th><td>1.0000</td><td>0.9963</td><td>0.0000</td><td>1.0000</td><td>0.7491</td></tr>
-<tr><th scope="row">6</th><td>1.0000</td><td>0.9833</td><td>0.4475</td><td>1.0000</td><td>0.8577</td></tr>
-<tr><th scope="row">7</th><td>1.0000</td><td>0.9981</td><td>0.9944</td><td>1.0000</td><td>0.9981</td></tr>
-<tr><th scope="row">8</th><td>1.0000</td><td>0.9831</td><td>0.0000</td><td>0.9980</td><td>0.7453</td></tr>
-<tr><th scope="row">9</th><td>1.0000</td><td>0.9938</td><td>0.9093</td><td>1.0000</td><td>0.9758</td></tr>
-<tr class="summary-row"><th scope="row">mean ± SD</th><td>0.9998 ± 0.0006</td><td>0.9892 ± 0.0087</td><td>0.5589 ± 0.4563</td><td>0.9998 ± 0.0007</td><td>0.8869 ± 0.1154</td></tr>
-<tr class="summary-row"><th scope="row">95% interval</th><td>0.9992 to 1.0000</td><td>0.9819 to 0.9964</td><td>0.1774 to 0.9404</td><td>0.9992 to 1.0000</td><td>0.7904 to 0.9834</td></tr>
-<tr class="group-row"><th scope="rowgroup" colspan="6">With posture regularization</th></tr>
-<tr><th scope="row">1</th><td>1.0000</td><td>0.9981</td><td>0.7634</td><td>1.0000</td><td>0.9404</td></tr>
-<tr><th scope="row">2</th><td>1.0000</td><td>0.9979</td><td>0.0000</td><td>1.0000</td><td>0.7495</td></tr>
-<tr><th scope="row">4</th><td>0.9922</td><td>0.9940</td><td>0.0000</td><td>0.9982</td><td>0.7461</td></tr>
-<tr><th scope="row">5</th><td>1.0000</td><td>0.9939</td><td>0.0000</td><td>1.0000</td><td>0.7485</td></tr>
-<tr><th scope="row">6</th><td>0.9980</td><td>0.9465</td><td>0.0000</td><td>1.0000</td><td>0.7361</td></tr>
-<tr><th scope="row">7</th><td>1.0000</td><td>0.9959</td><td>0.9672</td><td>1.0000</td><td>0.9908</td></tr>
-<tr><th scope="row">8</th><td>0.9980</td><td>0.9829</td><td>0.5695</td><td>1.0000</td><td>0.8876</td></tr>
-<tr><th scope="row">9</th><td>1.0000</td><td>0.9980</td><td>1.0000</td><td>0.9980</td><td>0.9990</td></tr>
-<tr class="summary-row"><th scope="row">mean ± SD</th><td>0.9985 ± 0.0027</td><td>0.9884 ± 0.0177</td><td>0.4125 ± 0.4600</td><td>0.9995 ± 0.0009</td><td>0.8497 ± 0.1170</td></tr>
-<tr class="summary-row"><th scope="row">95% interval</th><td>0.9962 to 1.0000</td><td>0.9736 to 1.0000</td><td>0.0279 to 0.7971</td><td>0.9988 to 1.0000</td><td>0.7520 to 0.9475</td></tr>
-</tbody>
-</table>
-<!-- END v1 success table -->
-            </div>
           </div>
         </details>
-        <p class="status-note">These results are preliminary: the main study re-runs both variants and the ablations in physics v2 and is still training.</p>
+        <p class="status-note">These results are preliminary. The main study repeats both variants and the ablations with the current settings (physics v2); training is still in progress, and its results will replace these.</p>
       </div>
     </section>
   </main>

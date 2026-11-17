@@ -1,29 +1,30 @@
-"""Results charts of the CR-Open project page: the complete physics-v1 study (8 seeds per arm).
+"""Results chart of the CR-Open project page: the complete physics-v1 study (8 seeds per variant).
 
 Reads the recorded analysis outputs (w5_stats table, w5_gd; frozen code, see their code_sha256 blocks):
   <data>/task/table.json, <data>/n1/table.json      per-seed and across-seed success at epoch 10000 (Table 2)
-  <data>/v1/gd_task.json, <data>/v1/gd_n1.json      the G-D ablation calls at epoch 6000
-  <data>/v1/cost.json                               N1 minus task-only at epoch 10000 (quoted in a caption)
+  <data>/v1/gd_task.json, <data>/v1/gd_n1.json      the G-D ablations at epoch 6000 (quoted in the page's text and
+                                                    its "Study details"; no chart)
+  <data>/v1/cost.json                               N1 minus task-only at epoch 10000 (kept for the paper)
 and writes
-  tools/data/v1_numbers.json                        every number the page shows, with the sha256 of each source
-  static/images/v1_success_e10000.svg               per-family success, one row per arm: seed dots (beeswarm),
-                                                    mean + 95 % CI
-  static/images/v1_ablation_m3_e6000.svg            M3 at epoch 6000: full recipe vs each component removed, with the
-                                                    change in mean below each removal
-  (with --html) the per-seed success table between the "v1 success table" markers of index.html
+  tools/data/v1_numbers.json                        every number the page quotes, with the sha256 of each source
+  static/images/v1_success_e10000.svg               success per closure type, both variants side by side in one
+                                                    panel: seed dots (beeswarm), mean + 95 % CI, mean in percent
+  static/images/v1_success_e10000_phone.svg         the same, one small panel per type (2 x 2), for screens up to
+                                                    600 px wide
 The page calls the two physics-v1 arms "without / with posture regularization" (the N1 terms: a relaxed reset pose, a
-flexion floor, posture and action-rate costs) and the families "closure types".
+flexion floor, posture and action-rate costs) and the families "closure types". Without posture regularization is
+drawn in the blue of the method figure's Observation group, with it in dark grey (orange already means squeeze).
 Intervals are the ones the analysis recorded: 95 % t-intervals of the mean over seeds (df = n - 1), clipped to
-[0, 1]; an arm whose seeds all have one value takes Agresti-Coull at that value over its pooled episodes. The change
-intervals are Welch, or a shifted one-sample t when one arm is constant. Nothing is recomputed except the display
-rounding (means 2 decimals in the charts; the table keeps 4). The pre-registered calls ("necessary") are not drawn;
-the page states them in words.
+[0, 1] (every column of the chart); an arm whose seeds all have one value would take Agresti-Coull at that value over
+its pooled episodes (the no-curriculum and N1 one-step-history ablations). Nothing is recomputed except the display
+rounding (means in whole percent).
 
 Text is Noto Sans (the page's font; tools/fonts/ holds a Latin subset of the OFL font), converted to paths.
-Seeds are placed as a beeswarm in screen pixels (the chart is drawn for 768 px width): x only spreads the seeds of a
-column, never their values, and centre spacing is at least the ring's outer diameter + 2 px.
+Seeds are placed as a beeswarm in screen pixels (drawn for 820 px, the width of the page's results column, and
+420 px for phones): x only spreads the seeds of a column, never their values, and centre spacing is at least the
+ring's outer diameter + 1.5 px.
 
-Usage: python tools/make_v1_charts.py --data DIR [--preview-dir DIR] [--html index.html]
+Usage: python tools/make_v1_charts.py --data DIR [--preview-dir DIR]
 """
 from __future__ import annotations
 
@@ -39,23 +40,23 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib import font_manager  # noqa: E402
-from matplotlib.transforms import blended_transform_factory  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "static" / "images"
 FAMS = ["M1", "M2", "M3", "M6"]
-ABL = [("hist1", "no history"), ("nounlock", "no unlock bonus"), ("nocurr", "no curriculum")]
+ABL = ("hist1", "nounlock", "nocurr")              # one component removed: observation history, unlock bonus, curriculum
+TYPE_NAME = {"M1": "Plain Thread", "M2": "Push-and-Turn", "M3": "Squeeze-and-Turn", "M6": "Stuck Seal"}
 ARM_TITLE = {"task-only": "Without posture regularization", "N1": "With posture regularization"}
 
 for f in sorted((ROOT / "tools" / "fonts").glob("*.ttf")):
     font_manager.fontManager.addfont(str(f))
 
-# dataviz reference palette: slot 1 for the plotted series; recessive chrome
-BLUE, GRAY = "#2a78d6", "#898781"
+# dataviz reference palette: slot 1 (the method figure's Observation blue) and a dark grey for the two variants
+BLUE, GRAY = "#2a78d6", "#52514e"
 INK, INK2, GRID, RULE = "#0b0b0b", "#52514e", "#e8e7e1", "#e3e1dc"
-DPI = 100                       # 7.68 in -> 768 px on the page
-RING_MS, RING_MEW = 5.2, 1.2    # points: outer diameter (5.2 + 1.2) pt = 8.9 px
-PITCH = 11.0                    # px between seed centres (>= outer diameter + 2 px)
+DPI = 100                       # 8.2 in -> 820 px on the page
+RING_MS, RING_MEW = 3.8, 0.9    # points: outer diameter (3.8 + 0.9) pt = 6.5 px
+PITCH = 8.0                     # px between seed centres (>= outer diameter + 1.5 px)
 
 plt.rcParams.update({
     "font.family": "Noto Sans", "svg.fonttype": "path", "svg.hashsalt": "cropen-v1", "figure.dpi": DPI,
@@ -93,7 +94,7 @@ def extract(data: Path) -> dict:
         assert g["complete"] and g["epoch"] == 6000 and not g["failed"], key
         arm_out = {"wording_suffix": g["wording_suffix"], "primary_seeds": g["primary"]["seeds"], "ablations": {},
                    "other_families": {}}
-        for ab, _ in ABL:
+        for ab in ABL:
             r = g["results"][ab]["M3"]
             arm_out["primary"] = {"per_seed": r["primary"]["rates"], "mean": r["primary"]["mean"],
                                   "lo": r["primary"]["lo"], "hi": r["primary"]["hi"],
@@ -114,7 +115,7 @@ def extract(data: Path) -> dict:
 
 
 # ---------------------------------------------------------------------------------------------------- marks
-def swarm(ax, vals):
+def swarm(ax, vals, pitch):
     """beeswarm x offsets (data units) for the values of one column: each seed keeps its value, seeds that would
     touch are pushed sideways to the nearest free place; the column is centred on its extent"""
     to_px = ax.transData.transform
@@ -127,8 +128,8 @@ def swarm(ax, vals):
         blocks = []
         for (px, py) in placed:
             dy = abs(py - y)
-            if dy < PITCH:
-                h = math.sqrt(PITCH ** 2 - dy ** 2)
+            if dy < pitch:
+                h = math.sqrt(pitch ** 2 - dy ** 2)
                 blocks.append((px - h, px + h))
         cands = [0.0] + [b[0] for b in blocks] + [b[1] for b in blocks]
         ok = [c for c in cands if all(not (lo + 1e-6 < c < hi - 1e-6) for lo, hi in blocks)]
@@ -140,31 +141,31 @@ def swarm(ax, vals):
     return [(o - shift) * x_per_px for o in out]
 
 
-def column(ax, xc, vals, mean, lo, hi, color, label_y=1.06, ci_dx=0.32, sw_dx=-0.10):
-    """one column: hollow seed rings (beeswarm, 2 px white halo), the 95 % interval as a thin bar and the mean as a
-    black tick to their right, the mean (2 decimals) above"""
-    offs = swarm(ax, vals)
+def column(ax, xc, vals, mean, lo, hi, color, sw_px=-8.0, ci_px=31.0, tick_px=5.0, label_y=1.06, fs=8.5):
+    """one column: hollow seed rings (beeswarm centred sw_px from xc, 2 px white halo), the 95 % interval as a thin
+    bar ci_px right of xc with the mean as a black tick, and the mean in percent above it"""
     to_px = ax.transData.transform
     px = to_px((1, 0))[0] - to_px((0, 0))[0]
+    offs = swarm(ax, vals, PITCH)
     r = (RING_MS + RING_MEW) / 72 * DPI / 2
-    room = (ci_dx - 0.05 - sw_dx) - (r + 4) / px             # rightmost seed centre that keeps 4 px to the tick
+    room = (ci_px - tick_px - 4 - r - sw_px) / px              # rightmost seed centre that keeps 4 px to the tick
     excess = max(offs) - room
     if excess > 0:
         offs = [o - excess for o in offs]
+    xs = xc + sw_px / px
     for dx, v in zip(offs, vals):
-        ax.plot(xc + sw_dx + dx, v, "o", ms=RING_MS + RING_MEW + 2.9, mfc="white", mec="none", zorder=3.9,
-                clip_on=False)
-        ax.plot(xc + sw_dx + dx, v, "o", ms=RING_MS, mfc="white", mec=color, mew=RING_MEW, zorder=4, clip_on=False)
-    xi = xc + ci_dx
-    ax.plot([xi, xi], [lo, hi], color=color, lw=1.5, alpha=0.7, solid_capstyle="butt", zorder=3)
-    ax.plot([xi - 0.05, xi + 0.05], [mean, mean], color=INK, lw=2.0, solid_capstyle="butt", zorder=5)
-    ax.text(xi, label_y, f"{mean:.2f}", ha="center", va="bottom", fontsize=8.5, color=INK)
+        ax.plot(xs + dx, v, "o", ms=RING_MS + RING_MEW + 2.9, mfc="white", mec="none", zorder=3.9, clip_on=False)
+        ax.plot(xs + dx, v, "o", ms=RING_MS, mfc="white", mec=color, mew=RING_MEW, zorder=4, clip_on=False)
+    xi, tk = xc + ci_px / px, tick_px / px
+    ax.plot([xi, xi], [lo, hi], color=color, lw=1.5, alpha=0.75, solid_capstyle="butt", zorder=3)
+    ax.plot([xi - tk, xi + tk], [mean, mean], color=INK, lw=2.0, solid_capstyle="butt", zorder=5)
+    ax.text(xi, label_y, f"{100 * mean:.0f}%", ha="center", va="bottom", fontsize=fs, color=INK)
 
 
-def style(ax, ymax=1.13):
+def style(ax, ymax=1.13, labels=True):
     ax.set_ylim(-0.05, ymax)
     ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
-    ax.set_yticklabels(["0", "0.25", "0.50", "0.75", "1.00"])
+    ax.set_yticklabels(["0%", "25%", "50%", "75%", "100%"] if labels else [])
     for y in [0, 0.25, 0.5, 0.75, 1.0]:
         ax.axhline(y, color=GRID, lw=0.8, zorder=0)
     for s in ("top", "right", "left", "bottom"):
@@ -173,151 +174,112 @@ def style(ax, ymax=1.13):
     ax.tick_params(axis="x", labelsize=9.5, pad=5, colors=INK)
 
 
-def legend(fig, x, y, color):
-    """one legend row (figure fractions): the identity of the marks is described in words, never by colour alone"""
+def legend(fig, rows):
+    """legend entries (figure inches, from the top left): the identity of the marks is said in words, never by
+    colour alone. rows: [(x_in, y_in, kind, colour, text)], kind 'ring' or 'bar'"""
     W, H = fig.get_size_inches()
-    fig.lines.append(plt.Line2D([x + 0.06 / W], [y + 0.055 / H], marker="o", ms=RING_MS, mfc="white", mec=color,
-                                mew=RING_MEW, transform=fig.transFigure, ls=""))
-    fig.text(x + 0.16 / W, y, "one training seed", fontsize=8.5, color=INK2, va="bottom")
-    x2 = x + 1.55 / W
-    fig.lines.append(plt.Line2D([x2, x2], [y - 0.03 / H, y + 0.15 / H], color=color, lw=1.5, alpha=0.7,
-                                transform=fig.transFigure))
-    fig.lines.append(plt.Line2D([x2 - 0.05 / W, x2 + 0.05 / W], [y + 0.06 / H, y + 0.06 / H], color=INK, lw=2.0,
-                                transform=fig.transFigure))
-    fig.text(x2 + 0.12 / W, y, "mean over seeds (number above) and its 95% interval", fontsize=8.5, color=INK2,
-             va="bottom")
+    for x, y, kind, color, text in rows:
+        yf = (H - y) / H
+        if kind == "ring":
+            fig.lines.append(plt.Line2D([(x + 0.05) / W], [yf], marker="o", ms=RING_MS, mfc="white", mec=color,
+                                        mew=RING_MEW, transform=fig.transFigure, ls=""))
+        else:
+            fig.lines.append(plt.Line2D([(x + 0.05) / W] * 2, [yf - 0.08 / H, yf + 0.08 / H], color=color, lw=1.5,
+                                        alpha=0.75, transform=fig.transFigure))
+            fig.lines.append(plt.Line2D([(x + 0.0) / W, (x + 0.10) / W], [yf, yf], color=INK, lw=2.0,
+                                        transform=fig.transFigure))
+        fig.text((x + 0.16) / W, yf, text, fontsize=8.5, color=INK2, va="center")
 
 
-def save(fig, stem, preview):
+def text_w(fig, s, size=8.5):
+    t = fig.text(0, 0, s, fontsize=size)
+    w = t.get_window_extent(fig.canvas.get_renderer()).width / DPI
+    t.remove()
+    return w
+
+
+def save(fig, stem, preview, page_px=None):
     buf = io.StringIO()
     fig.savefig(buf, format="svg", metadata={"Date": None, "Creator": None})
     (OUT / f"{stem}.svg").write_text(buf.getvalue(), encoding="utf-8", newline="\n")
+    w, h = fig.get_size_inches()
     if preview:
         fig.savefig(Path(preview) / f"{stem}.png", dpi=200)
-        fig.savefig(Path(preview) / f"{stem}_page.png", dpi=DPI)
-    w, h = fig.get_size_inches()
+        fig.savefig(Path(preview) / f"{stem}_page.png", dpi=DPI * (page_px or w * DPI) / (w * DPI))
     plt.close(fig)
     return round(w * DPI), round(h * DPI)
 
 
+VARIANTS = (("task-only", BLUE), ("N1", GRAY))
+
+
+def legend_rows(fig, x0, y0, stacked):
+    items = [("ring", BLUE, ARM_TITLE["task-only"]), ("ring", GRAY, ARM_TITLE["N1"]),
+             ("bar", "#898781", "Mean (number above) and 95% interval")]
+    if stacked:
+        return [(x0, y0 + 0.2 * i, k, c, t) for i, (k, c, t) in enumerate(items)]
+    rows, x = [], x0
+    for k, c, t in items:
+        rows.append((x, y0, k, c, t))
+        x += 0.16 + text_w(fig, t) + 0.34
+    return rows
+
+
 def chart_success(nums, preview):
-    """two rows (one per arm), five columns each; the rows are stacked so that eight seeds at the same rate fit
-    side by side at full spacing"""
-    W, L, R = 7.68, 0.66, 0.10
-    title_h, legend_h, sub_h, ax_h, tick_h, gap = 0.36, 0.34, 0.30, 1.62, 0.46, 0.14
-    H = title_h + legend_h + 2 * (sub_h + ax_h + tick_h) + gap + 0.04
+    """one panel: the four closure types, each with both variants side by side (eight seeds each)"""
+    W, L, R = 8.20, 0.62, 0.10
+    legend_h, ax_h, tick_h = 0.40, 1.86, 0.46
+    H = legend_h + ax_h + tick_h + 0.04
     fig = plt.figure(figsize=(W, H))
-    xs = [0, 1, 2, 3, 4.42]
-    y_top = H - title_h - legend_h
-    for r, arm in enumerate(("task-only", "N1")):
-        top = y_top - r * (sub_h + ax_h + tick_h + gap) - sub_h
-        ax = fig.add_axes((L / W, (top - ax_h) / H, (W - L - R) / W, ax_h / H))
-        ax.set_xlim(-0.56, 4.92)
-        style(ax)
-        d = nums["success_e10000"][arm]["families"]
-        for x, f in zip(xs, FAMS + ["balanced"]):
-            a = d[f]
-            column(ax, x, a["per_seed"], a["mean"], a["lo"], a["hi"], BLUE)
-        ax.axvline(3.71, ymin=0.02, ymax=0.9, color=RULE, lw=1.0, zorder=0)
-        ax.set_xticks(xs)
-        ax.set_xticklabels(["M1\nplain thread", "M2\npush-and-turn", "M3\nsqueeze-and-turn", "M6\nstuck seal",
-                            "balanced\n(mean of 4)"], linespacing=1.15, va="top")
-        ax.text(-0.53, 1.06, "mean", fontsize=8, color=INK2, va="bottom")
-        fig.text(L / W, (top + 0.10) / H, ARM_TITLE[arm], fontsize=10, color=INK, va="bottom")
-        ax.set_ylabel("success rate", fontsize=8.5, color=INK2, labelpad=6)
-    fig.text(L / W, (H - 0.10) / H, "Success per closure type at epoch 10,000 · physics v1 · 8 seeds per variant",
-             fontsize=10.5, color=INK, weight="bold", va="top")
-    legend(fig, L / W, (H - title_h - legend_h + 0.08) / H, BLUE)
+    ax = fig.add_axes((L / W, (tick_h + 0.04) / H, (W - L - R) / W, ax_h / H))
+    ax.set_xlim(-0.5, 3.5)
+    style(ax)
+    for t, f in enumerate(FAMS):
+        for k, (arm, color) in enumerate(VARIANTS):
+            a = nums["success_e10000"][arm]["families"][f]
+            column(ax, t + (k - 0.5) * 0.46, a["per_seed"], a["mean"], a["lo"], a["hi"], color)
+    for xv in (0.5, 1.5, 2.5):
+        ax.axvline(xv, ymin=0.02, ymax=0.97, color=RULE, lw=1.0, zorder=0)
+    ax.set_xticks(range(4))
+    ax.set_xticklabels([f"{f}\n{TYPE_NAME[f]}" for f in FAMS], linespacing=1.2, va="top")
+    ax.set_ylabel("Success rate", fontsize=8.5, color=INK2, labelpad=6)
+    for row in [legend_rows(fig, L, 0.17, stacked=False)]:
+        legend(fig, row)
     return save(fig, "v1_success_e10000", preview)
 
 
-def chart_ablation(nums, preview):
-    W, L, R, mid = 7.68, 0.66, 0.10, 0.22
-    title_h, legend_h, sub_h, ax_h, tick_h, rows_h = 0.36, 0.34, 0.30, 1.95, 0.50, 0.40
-    H = title_h + legend_h + sub_h + ax_h + tick_h + rows_h + 0.04
+def chart_success_phone(nums, preview):
+    """the same numbers for screens up to 600 px: one small panel per type (2 x 2), the variants labelled below"""
+    W, L, R, mid = 4.20, 0.58, 0.06, 0.14
+    legend_h, title_h, ax_h, tick_h, gap = 0.70, 0.26, 1.30, 0.22, 0.10
+    H = legend_h + 2 * (title_h + ax_h + tick_h) + gap + 0.04
     fig = plt.figure(figsize=(W, H))
     pw = (W - L - R - mid) / 2
-    top = H - title_h - legend_h - sub_h
-    xs = [0, 1, 2, 3]
-    for p, arm in enumerate(("task-only", "N1")):
-        x0 = L + p * (pw + mid)
+    for i, f in enumerate(FAMS):
+        r, k = divmod(i, 2)
+        x0 = L + k * (pw + mid)
+        top = H - legend_h - r * (title_h + ax_h + tick_h + gap) - title_h
         ax = fig.add_axes((x0 / W, (top - ax_h) / H, pw / W, ax_h / H))
-        ax.set_xlim(-0.55, 3.55)
-        style(ax)
-        if p:
-            ax.set_yticklabels([])
-        rows_tr = blended_transform_factory(ax.transData, fig.dpi_scale_trans)   # x: data, y: inches
-        row_change = rows_h + 0.0
-        g = nums["gd_m3_e6000"][arm]
-        pr = g["primary"]
-        column(ax, 0, pr["per_seed"], pr["mean"], pr["lo"], pr["hi"], BLUE, ci_dx=0.36, sw_dx=-0.08)
-        for i, (ab, _) in enumerate(ABL, start=1):
-            a = g["ablations"][ab]
-            column(ax, i, a["per_seed"], a["mean"], a["lo"], a["hi"], GRAY, ci_dx=0.30, sw_dx=-0.06)
-            ch = -a["gap_pp"]
-            ax.text(i + 0.08, row_change, f"{ch:+.1f} pp".replace("-", "−"), ha="center", va="top",
-                    fontsize=8.5, color=INK, transform=rows_tr)
-        # row header in the full-recipe slot, which has no change of its own
-        ax.text(0.12, row_change, "change in\nmean", ha="center", va="top", fontsize=8, color=INK2,
-                style="italic", linespacing=1.1, transform=rows_tr)
-        ax.set_xticks([x + 0.08 for x in xs])
-        ax.set_xticklabels(["full recipe\n(8 seeds)", "no history\n(H = 1)\n(3 seeds)", "no unlock\nbonus\n(3 seeds)",
-                            "no\ncurriculum\n(3 seeds)"], fontsize=8.5, linespacing=1.15, va="top")
-        ax.text(-0.52, 1.06, "mean", fontsize=8, color=INK2, va="bottom")
-        fig.text(x0 / W, (top + 0.10) / H, ARM_TITLE[arm], fontsize=10, color=INK, va="bottom")
-        if not p:
-            ax.set_ylabel("M3 success rate", fontsize=8.5, color=INK2, labelpad=6)
-    fig.text(L / W, (H - 0.10) / H, "Squeeze-and-turn (M3) at epoch 6,000 · one component removed · physics v1",
-             fontsize=10.5, color=INK, weight="bold", va="top")
-    legend(fig, L / W, (H - title_h - legend_h + 0.08) / H, GRAY)
-    return save(fig, "v1_ablation_m3_e6000", preview)
-
-
-# ---------------------------------------------------------------------------------------------------- table views
-def num(v, d=4):
-    return f"{v:.{d}f}"
-
-
-def table_success(nums) -> str:
-    cols = FAMS + ["balanced"]
-    rows = ['<table class="table is-narrow result-table">',
-            "<caption>Success rate of each seed's final checkpoint (epoch 10,000), physics v1, with the mean ± SD "
-            "over the eight seeds and the 95% t-interval of the mean. Balanced: the mean over the four types."
-            "</caption>",
-            '<thead><tr><th scope="col">Seed</th>' + "".join(f'<th scope="col">{c}</th>' for c in cols)
-            + "</tr></thead>", "<tbody>"]
-    for arm in ("task-only", "N1"):
-        d = nums["success_e10000"][arm]
-        rows.append(f'<tr class="group-row"><th scope="rowgroup" colspan="{len(cols) + 1}">{ARM_TITLE[arm]}</th></tr>')
-        for i, s in enumerate(d["seeds"]):
-            rows.append(f'<tr><th scope="row">{s}</th>'
-                        + "".join(f"<td>{num(d['families'][c]['per_seed'][i])}</td>" for c in cols) + "</tr>")
-        rows.append('<tr class="summary-row"><th scope="row">mean ± SD</th>'
-                    + "".join(f"<td>{num(d['families'][c]['mean'])} ± {num(d['families'][c]['sd'])}</td>"
-                              for c in cols) + "</tr>")
-        rows.append('<tr class="summary-row"><th scope="row">95% interval</th>'
-                    + "".join(f"<td>{num(d['families'][c]['lo'])} to {num(d['families'][c]['hi'])}</td>"
-                              for c in cols) + "</tr>")
-    rows += ["</tbody>", "</table>"]
-    return "\n".join(rows)
-
-
-def patch_html(path: Path, marker: str, snippet: str):
-    """replace the text between the marker comments; the page keeps its own line endings"""
-    raw = path.read_bytes().decode("utf-8")
-    eol = "\r\n" if "\r\n" in raw else "\n"
-    text = raw.replace("\r\n", "\n")
-    b, e = f"<!-- BEGIN {marker} (tools/make_v1_charts.py) -->", f"<!-- END {marker} -->"
-    i, j = text.index(b) + len(b), text.index(e)
-    text = text[:i] + "\n" + snippet + "\n" + text[j:]
-    path.write_bytes(text.replace("\n", eol).encode("utf-8"))
+        ax.set_xlim(-0.5, 1.5)
+        style(ax, labels=(k == 0))
+        for j, (arm, color) in enumerate(VARIANTS):
+            a = nums["success_e10000"][arm]["families"][f]
+            column(ax, j, a["per_seed"], a["mean"], a["lo"], a["hi"], color)
+        ax.set_xticks([0, 1])
+        ax.set_xticklabels(["Without", "With"], fontsize=8.5, color=INK2)
+        ax.tick_params(axis="x", pad=3)
+        fig.text((x0 + pw / 2) / W, (top + 0.07) / H, f"{f} {TYPE_NAME[f]}", fontsize=9.5, color=INK,
+                 weight="bold", ha="center", va="bottom")
+        if k == 0:
+            ax.set_ylabel("Success rate", fontsize=8.5, color=INK2, labelpad=4)
+    legend(fig, legend_rows(fig, L, 0.14, stacked=True))
+    return save(fig, "v1_success_e10000_phone", preview, page_px=343)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", type=Path, required=True)
     ap.add_argument("--preview-dir", default=None)
-    ap.add_argument("--html", type=Path, default=None, help="write the per-seed success table into this page")
     a = ap.parse_args()
     found = {f.name for f in font_manager.fontManager.ttflist if f.name == "Noto Sans"}
     assert found, "Noto Sans not registered (tools/fonts/)"
@@ -326,9 +288,7 @@ def main():
     (ROOT / "tools" / "data" / "v1_numbers.json").write_text(json.dumps(nums, indent=1), encoding="utf-8",
                                                               newline="\n")
     print("v1_success_e10000.svg", chart_success(nums, a.preview_dir))
-    print("v1_ablation_m3_e6000.svg", chart_ablation(nums, a.preview_dir))
-    if a.html:
-        patch_html(a.html, "v1 success table", table_success(nums))
+    print("v1_success_e10000_phone.svg", chart_success_phone(nums, a.preview_dir))
     print("ok")
 
 
